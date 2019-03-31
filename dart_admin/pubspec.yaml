@@ -1,0 +1,17 @@
+name: dart_admin
+description: A sample command-line application.
+# version: 1.0.0
+# homepage: https://www.example.com
+# author: Warren Strange <email@example.com>
+
+environment:
+  sdk: '>=2.1.0 <3.0.0'
+
+dependencies:
+  #firebase_admin_interop: ^1.2.1
+  googleapis: ^0.52.0+1
+  googleapis_auth: any
+
+dev_dependencies:
+  test: ^1.0.0
+  pedantic: any
