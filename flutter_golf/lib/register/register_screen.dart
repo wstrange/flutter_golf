@@ -27,6 +27,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print("Register bloc $_registerBloc");
     return Scaffold(
       appBar: AppBar(title: Text('Register')),
       body: Center(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'authentication_bloc/bloc.dart';
+import 'teetimes/teetime_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatelessWidget {
   final String name;
@@ -27,6 +29,15 @@ class HomeScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           Center(child: Text('Welcome $name!')),
+          FloatingActionButton(
+              child: Icon(Icons.add),
+              onPressed: () async {
+                var user = await FirebaseAuth.instance.currentUser();
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => CreateTeetimeScreen(user: user)));
+              })
         ],
       ),
     );
