@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'authentication_bloc/bloc.dart';
 import 'teetimes/teetime_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'svc/repo_service.dart';
+import 'pages/teesheet_editor.dart';
 
 class HomeScreen extends StatelessWidget {
   final String name;
@@ -29,6 +31,15 @@ class HomeScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           Center(child: Text('Welcome $name!')),
+          MaterialButton(child: Text("Generate Data"),
+            onPressed: () async  {
+                await RepoService().generateSampleData();
+            },),
+          MaterialButton(child: Text("Tee Sheet"),
+            onPressed: () async  {
+              Navigator.push(context,
+                  MaterialPageRoute( builder: (context) => TeeSheetPage()));
+            },),
           FloatingActionButton(
               child: Icon(Icons.add),
               onPressed: () async {

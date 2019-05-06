@@ -15,7 +15,7 @@ class TeetimeService {
        //_firebaseAuth = auth ?? FirebaseAuth.instance;
 
 
-  Future<DocumentReference> createTeetime(Teetime teetime) async {
+  Future<DocumentReference> createTeetime(FSTeetime teetime) async {
     var docRef = await _firestore.collection("teetimes").add(teetime.data);
     return docRef;
   }

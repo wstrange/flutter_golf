@@ -33,7 +33,12 @@ class SelectTimeEvent extends CreateTeetimeEvent {
   String toString() => "Select Time Event t=$time";
 }
 
-class SelectCourse extends CreateTeetimeEvent {
+class SelectCourseEvent extends CreateTeetimeEvent {
+  String course;
+
+  SelectCourseEvent(this.course);
+
+  String toString() => "Select Course Event t=$course";
 
 }
 

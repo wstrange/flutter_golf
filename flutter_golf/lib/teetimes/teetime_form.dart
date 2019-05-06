@@ -27,6 +27,7 @@ class CreateTeetimeFormState extends State<CreateTeetimeForm> {
   }
 
   DateTime selectedDate;
+  int currentStep = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -79,12 +80,20 @@ class CreateTeetimeFormState extends State<CreateTeetimeForm> {
 
               var enableButton = state is ReadyToBookState ? true: false;
 
+              var steps = _steps();
               return Column(children: <Widget>[
-                _teeTimeDateSelector(),
-                FloatingActionButton(
-                    onPressed: (enableButton ? _bookTeeTime : null),
-                    tooltip: 'Add TeeTime',
-                    child: Icon(Icons.add))
+                Stepper(steps: steps,
+                currentStep: this.currentStep,
+                onStepContinue: () {
+                  setState( () {
+                    if (currentStep < steps.length - 1) {
+                      ++currentStep;
+                    } else {
+                      currentStep = 0;
+                    }
+                  });
+                  print("Current step $currentStep");
+                })
               ]);
             }));
   }
@@ -128,6 +137,42 @@ class CreateTeetimeFormState extends State<CreateTeetimeForm> {
       ],
     );
   }
+
+  String course ="Country Hills";
+  var courses = ["Country Hills", "The Ridge", "Some course"];
+
+  Widget _courseSelector() {
+    return Row(children: <Widget>[
+      DropdownButton<String>(
+        value: course,
+        onChanged: (String newCourse) {
+          course = newCourse;
+          _bloc.dispatch(SelectCourseEvent(course));
+        },
+        items: courses.map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList()
+      )
+    ],);
+  }
+
+  List<Step> _steps() => [
+    Step(
+      title: Text("Select Course"),
+      content: _courseSelector(),
+      isActive: true),
+    Step(title: Text("Select Tee Time"),
+      content: _teeTimeDateSelector(),
+    ),
+    Step( title: Text("Book Time"),
+    content: MaterialButton(child: Text("Book"),onPressed: () {
+      _bloc.dispatch(BookTeetimeEvent());
+    }))
+  ];
+
 
   @override
   void dispose() {

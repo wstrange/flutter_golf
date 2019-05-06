@@ -9,14 +9,14 @@ import '../svc/teetimes_svc.dart';
 class CreateTeetimeBloc extends Bloc<CreateTeetimeEvent, CreateTeetimeState> {
   final FirebaseUser _user;
   final TeetimeService _svc;
-  final Teetime _teetime;
+  final FSTeetime _teetime;
 
   @override
   CreateTeetimeState get initialState => InitialCreateTeetimeState();
 
   CreateTeetimeBloc(this._user)
       : _svc = TeetimeService(_user),
-        _teetime = Teetime(_user) {}
+        _teetime = FSTeetime(_user) {}
 
   @override
   Stream<CreateTeetimeState> mapEventToState(
@@ -31,8 +31,13 @@ class CreateTeetimeBloc extends Bloc<CreateTeetimeEvent, CreateTeetimeState> {
     }
     else if( event is SelectTimeEvent) {
       _teetime.time = Timestamp.fromDate(event.time);
-      yield BuildingState();
-      yield ReadyToBookState();
+      yield readyToBook();
+    }
+    else if( event is SelectCourseEvent) {
+      // Todo:
+      //_teetime.course =event.course;
+      _teetime.setCourse("AIJwXrIv0Q1lgefcSxbo");
+      yield readyToBook();
     }
   }
 
@@ -46,4 +51,11 @@ class CreateTeetimeBloc extends Bloc<CreateTeetimeEvent, CreateTeetimeState> {
     }
   }
 
+  // Check if the tee time is in a valid state
+  // return the next state
+  CreateTeetimeState readyToBook() {
+    if( _teetime.course != null && _teetime.time != null)
+      return ReadyToBookState();
+    return BuildingState();
+  }
 }
