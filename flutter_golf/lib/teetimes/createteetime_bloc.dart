@@ -15,7 +15,8 @@ class CreateTeetimeBloc extends Bloc<CreateTeetimeEvent, CreateTeetimeState> {
   CreateTeetimeState get initialState => InitialCreateTeetimeState();
 
   CreateTeetimeBloc(this._user)
-      : _svc = TeetimeService(_user),
+      //: _svc = TeetimeService(_user),
+      : _svc = TeetimeService(),
         _teetime = FSTeetime(_user) {}
 
   @override
@@ -28,12 +29,10 @@ class CreateTeetimeBloc extends Bloc<CreateTeetimeEvent, CreateTeetimeState> {
       yield BuildingState();
     } else if (event is BookTeetimeEvent) {
       yield* _mapFormSubmittedToState();
-    }
-    else if( event is SelectTimeEvent) {
+    } else if (event is SelectTimeEvent) {
       _teetime.time = Timestamp.fromDate(event.time);
       yield readyToBook();
-    }
-    else if( event is SelectCourseEvent) {
+    } else if (event is SelectCourseEvent) {
       // Todo:
       //_teetime.course =event.course;
       _teetime.setCourse("AIJwXrIv0Q1lgefcSxbo");
@@ -54,7 +53,7 @@ class CreateTeetimeBloc extends Bloc<CreateTeetimeEvent, CreateTeetimeState> {
   // Check if the tee time is in a valid state
   // return the next state
   CreateTeetimeState readyToBook() {
-    if( _teetime.course != null && _teetime.time != null)
+    if (_teetime.course != null && _teetime.time != null)
       return ReadyToBookState();
     return BuildingState();
   }

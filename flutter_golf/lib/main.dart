@@ -1,5 +1,5 @@
-
 import 'package:flutter/material.dart';
+import 'package:flutter_golf/svc/teetimes_svc.dart';
 import 'util/simple_bloc_delegate.dart';
 import 'package:bloc/bloc.dart';
 import 'svc/user_repository.dart';
@@ -8,13 +8,12 @@ import 'authentication_bloc/bloc.dart';
 import 'splash_screen.dart';
 import 'home_screen.dart';
 import 'login/login.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   BlocSupervisor().delegate = SimpleBlocDelegate();
   runApp(App());
 }
-
-
 
 class App extends StatefulWidget {
   State<App> createState() => _AppState();
@@ -35,20 +34,23 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return BlocProvider(
       bloc: _authenticationBloc,
-      child: MaterialApp(
-        home: BlocBuilder(
-          bloc: _authenticationBloc,
-          builder: (BuildContext context, AuthenticationState state) {
-            if (state is InitialAuthenticationState) {
-              return SplashScreen();
-            }
-            if (state is Unauthenticated) {
-              return LoginScreen(userRepository: _userRepository);
-            }
-            if (state is Authenticated) {
-              return HomeScreen(name: state.displayName);
-            }
-          },
+      child: ChangeNotifierProvider<TeetimeService>(
+        builder: (BuildContext context) => TeetimeService(),
+        child: MaterialApp(
+          home: BlocBuilder(
+            bloc: _authenticationBloc,
+            builder: (BuildContext context, AuthenticationState state) {
+              if (state is InitialAuthenticationState) {
+                return SplashScreen();
+              }
+              if (state is Unauthenticated) {
+                return LoginScreen(userRepository: _userRepository);
+              }
+              if (state is Authenticated) {
+                return HomeScreen(name: state.displayName);
+              }
+            },
+          ),
         ),
       ),
     );
@@ -60,8 +62,6 @@ class _AppState extends State<App> {
     super.dispose();
   }
 }
-
-
 
 //
 //class MyApp extends StatelessWidget {

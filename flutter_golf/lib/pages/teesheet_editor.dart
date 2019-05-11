@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../svc/repo_service.dart';
+import '../svc/teetimes_svc.dart';
+import 'package:provider/provider.dart';
 
 class TeeSheetPage extends StatefulWidget {
   @override
@@ -8,35 +9,51 @@ class TeeSheetPage extends StatefulWidget {
 }
 
 class _TeeSheetPageState extends State<TeeSheetPage> {
-  Map<String, String> teeSheet;
+  String course = "ECS1WnnFLNrn2wPe8WUc";
 
   @override
   void initState() {
     super.initState();
-
-    teeSheet = RepoService().emptyTeeSheet();
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-        child: Scaffold(
-            appBar: AppBar(title: Text("Country Hills Talons")),
-            body: Row(
-              children: [Expanded(child: _createTeeSheet(teeSheet))],
-            )));
+      child: Scaffold(
+          appBar: AppBar(title: Text("Country Hills Talons")),
+          body: Column(
+            children: [
+              Expanded(child: _createTeeSheet()),
+              MaterialButton(
+                child: Text("Reload"),
+                onPressed: () {
+                  var svc = Provider.of<TeetimeService>(context);
+                  var d = DateTime(2019, 5, 5, 8);
+                  svc.updateTeesSheet(course, d);
+                },
+              )
+            ],
+          )),
+    );
   }
 
-  Widget _createTeeSheet(Map<String, String> teeSheet) {
-    var teeTimes = teeSheet.keys.toList();
+  Widget _createTeeSheet() {
+    print("Create teeshet $teeSheet");
 
-    return ListView.builder(
-        itemCount: teeSheet.length,
-        itemBuilder: (context, position) {
-          var t = teeTimes[position];
-          return _createTile(t, teeSheet[t]);
-        });
+    return Consumer<TeetimeService>(builder: (context, tsvc, _) {
+      var teeSheet = tsvc.teeSheet;
+      var l = teeSheet.keys.toList();
+      return ListView.builder(
+          itemCount: teeSheet.length,
+          itemBuilder: (context, position) {
+            var k = l[position];
+            var v = teeSheet[k].toString();
+            print("position = $position key= $k  val=$v");
+            return _createTile(k, v);
+          });
+    });
   }
+
 //  }
 //
 //  List<Widget> _oldTile(String time, String teeTimeRef) => [
@@ -60,10 +77,13 @@ class _TeeSheetPageState extends State<TeeSheetPage> {
 //  ];
 
   Widget _createTile(String time, String teeTimeRef) => ListTile(
-      contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-      leading: Text(time),
-      title: Text(teeTimeRef),
-      trailing:
-          Icon(Icons.keyboard_arrow_right, color: Colors.grey, size: 30.0),
-    onTap: () { print("Tee time $time selected");},);
+        contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+        leading: Text(time),
+        title: Text(teeTimeRef),
+        trailing:
+            Icon(Icons.keyboard_arrow_right, color: Colors.grey, size: 30.0),
+        onTap: () {
+          print("Tee time $time selected");
+        },
+      );
 }
