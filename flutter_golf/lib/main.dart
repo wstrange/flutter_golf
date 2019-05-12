@@ -34,23 +34,20 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return BlocProvider(
       bloc: _authenticationBloc,
-      child: ChangeNotifierProvider<TeetimeService>(
-        builder: (BuildContext context) => TeetimeService(),
-        child: MaterialApp(
-          home: BlocBuilder(
-            bloc: _authenticationBloc,
-            builder: (BuildContext context, AuthenticationState state) {
-              if (state is InitialAuthenticationState) {
-                return SplashScreen();
-              }
-              if (state is Unauthenticated) {
-                return LoginScreen(userRepository: _userRepository);
-              }
-              if (state is Authenticated) {
-                return HomeScreen(name: state.displayName);
-              }
-            },
-          ),
+      child: MaterialApp(
+        home: BlocBuilder(
+          bloc: _authenticationBloc,
+          builder: (BuildContext context, AuthenticationState state) {
+            if (state is InitialAuthenticationState) {
+              return SplashScreen();
+            }
+            if (state is Unauthenticated) {
+              return LoginScreen(userRepository: _userRepository);
+            }
+            if (state is Authenticated) {
+              return HomeScreen(name: state.displayName);
+            }
+          },
         ),
       ),
     );

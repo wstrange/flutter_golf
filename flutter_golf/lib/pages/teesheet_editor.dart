@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../svc/teetimes_svc.dart';
 import 'package:provider/provider.dart';
+import '../util/date_format.dart' as util;
 
 class TeeSheetPage extends StatefulWidget {
   @override
@@ -29,7 +30,7 @@ class _TeeSheetPageState extends State<TeeSheetPage> {
                 onPressed: () {
                   var svc = Provider.of<TeetimeService>(context);
                   var d = DateTime(2019, 5, 5, 8);
-                  svc.updateTeesSheet(course, d);
+                  svc.refreshTeeSheet(course, d);
                 },
               )
             ],
@@ -38,52 +39,37 @@ class _TeeSheetPageState extends State<TeeSheetPage> {
   }
 
   Widget _createTeeSheet() {
-    print("Create teeshet $teeSheet");
-
     return Consumer<TeetimeService>(builder: (context, tsvc, _) {
       var teeSheet = tsvc.teeSheet;
-      var l = teeSheet.keys.toList();
+      if (teeSheet == null || teeSheet.teeTimes == null) {
+        return Text("Tee Sheet not available for this day!");
+      }
+      var times = teeSheet.teeTimes;
+      var l = times.keys.toList()..sort();
       return ListView.builder(
-          itemCount: teeSheet.length,
+          itemCount: times.length,
           itemBuilder: (context, position) {
             var k = l[position];
-            var v = teeSheet[k].toString();
-            print("position = $position key= $k  val=$v");
-            return _createTile(k, v);
+            var v = times[k].toString();
+            return _createTile(util.dateToHHMM(k), v);
           });
     });
   }
 
-//  }
-//
-//  List<Widget> _oldTile(String time, String teeTimeRef) => [
-//    Padding(
-//      padding: const EdgeInsets.all(8.0),
-//      child: Text(time,
-//          style: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold)),
-//    ),
-//    Padding(
-//      padding: const EdgeInsets.fromLTRB(30.0, 6.0, 12.0, 12.0),
-//      child: Text(teeSheet[teeTimeRef],
-//          style: TextStyle(fontSize: 18.0)),
-//    ),
-//  ];
-//
-//  ),
-//  Divider(
-//  height: 2.0,
-//  color: Colors.grey,
-//  )
-//  ];
-
-  Widget _createTile(String time, String teeTimeRef) => ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+  Widget _createTile(String time, String teeTimeRef) {
+    var t = "available";
+    return Card(
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 5.0, vertical: 2.0),
         leading: Text(time),
-        title: Text(teeTimeRef),
+        title: Text(t),
         trailing:
-            Icon(Icons.keyboard_arrow_right, color: Colors.grey, size: 30.0),
+            Icon(Icons.keyboard_arrow_right, color: Colors.grey, size: 20.0),
+        dense: true,
         onTap: () {
           print("Tee time $time selected");
         },
-      );
+      ),
+    );
+  }
 }

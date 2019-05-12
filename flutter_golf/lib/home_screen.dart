@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_golf/svc/teetimes_svc.dart';
+import 'package:provider/provider.dart';
 import 'authentication_bloc/bloc.dart';
 import 'teetimes/teetime_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -31,15 +33,23 @@ class HomeScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: <Widget>[
           Center(child: Text('Welcome $name!')),
-          MaterialButton(child: Text("Generate Data"),
-            onPressed: () async  {
-                await RepoService().generateSampleData();
-            },),
-          MaterialButton(child: Text("Tee Sheet"),
-            onPressed: () async  {
-              Navigator.push(context,
-                  MaterialPageRoute( builder: (context) => TeeSheetPage()));
-            },),
+          MaterialButton(
+            child: Text("Generate Data"),
+            onPressed: () async {
+              await RepoService().generateSampleData();
+            },
+          ),
+          MaterialButton(
+            child: Text("Tee Sheet"),
+            onPressed: () async {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => ChangeNotifierProvider(
+                          builder: (context) => TeetimeService(),
+                          child: TeeSheetPage())));
+            },
+          ),
           FloatingActionButton(
               child: Icon(Icons.add),
               onPressed: () async {

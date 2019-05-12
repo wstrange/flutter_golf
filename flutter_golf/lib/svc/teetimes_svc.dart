@@ -9,8 +9,8 @@ class TeetimeService with ChangeNotifier {
   final Firestore _firestore;
   //final FirebaseUser _user;
   final _ymdFormatter = new DateFormat('yyyy-MM-dd');
-  Map<dynamic, dynamic> teeSheet = {};
 
+  TeeSheet teeSheet;
   // Create the teeTime service. This is always done in the
   // the context of a current user.
   TeetimeService({Firestore firestore, FirebaseAuth auth})
@@ -22,8 +22,7 @@ class TeetimeService with ChangeNotifier {
     return docRef;
   }
 
-  Future<Map<dynamic, dynamic>> updateTeesSheet(
-      String course, DateTime date) async {
+  Future<TeeSheet> refreshTeeSheet(String course, DateTime date) async {
     var t = _ymdFormatter.format(date);
     var doc = _firestore
         .collection("courses")
@@ -33,16 +32,10 @@ class TeetimeService with ChangeNotifier {
     print("$course  date=$t");
     print("Getting doc = $doc");
     var m = await doc.get();
-    var d2 = _firestore
-        .document("/courses/ECS1WnnFLNrn2wPe8WUc/teesheet/2019-05-05");
-    var m2 = await d2.get();
 
     // todo: Convert this to a model
-    var xx = m.data;
+    teeSheet = TeeSheet.fromJSON(m.data['teetimes']);
 
-    teeSheet = xx['teetimes'];
-    print("Tee sheet is $teeSheet m2 = ${m2.data}");
-    if (teeSheet == null) teeSheet = {};
     notifyListeners();
     return teeSheet;
   }
