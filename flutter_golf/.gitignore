@@ -15,6 +15,7 @@
 *.ipr
 *.iws
 .idea/
+*.g.dart
 
 # Visual Studio Code related
 .vscode/

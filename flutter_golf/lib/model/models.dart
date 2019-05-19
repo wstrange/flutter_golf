@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 class User {
   String email;
   String id;
+
+  User({this.email, this.id});
 }
 
 class Course {
@@ -11,6 +13,11 @@ class Course {
   String name;
   GeoPoint location;
   Map<DateTime, TeeSheet> teeSheets = {};
+  Course({this.id, this.name});
+
+  factory Course.fromMap(Map<String, dynamic> m) {
+    return Course(name: m['name'], id: m['id']);
+  }
 }
 
 class TeeSheet {

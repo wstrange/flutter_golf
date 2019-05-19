@@ -7,6 +7,7 @@ import 'teetimes/teetime_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'svc/repo_service.dart';
 import 'pages/teesheet_editor.dart';
+import 'pages/course_selector.dart';
 
 class HomeScreen extends StatelessWidget {
   final String name;
@@ -48,6 +49,15 @@ class HomeScreen extends StatelessWidget {
                       builder: (context) => ChangeNotifierProvider(
                           builder: (context) => TeetimeService(),
                           child: TeeSheetPage())));
+            },
+          ),
+          MaterialButton(
+            child: Text("Course Selector"),
+            onPressed: () async {
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => CourseSelector("test is cool")));
             },
           ),
           FloatingActionButton(

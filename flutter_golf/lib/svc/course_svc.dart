@@ -1,0 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../model/models.dart';
+import 'package:intl/intl.dart';
+
+class CourseService {
+  final Firestore _firestore;
+
+  TeeSheet teeSheet;
+
+  // Create the teeTime service. This is always done in the
+  // the context of a current user.
+  CourseService({Firestore firestore, FirebaseAuth auth})
+      : _firestore = firestore ?? Firestore.instance;
+
+  Stream<List<Course>> getCourses() {
+    var ref = _firestore.collection("courses");
+    return ref.snapshots().map((list) =>
+        list.documents.map((doc) => Course.fromMap(doc.data)).toList());
+  }
+}
