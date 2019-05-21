@@ -7,10 +7,8 @@ part of 'course_selector.dart';
 // **************************************************************************
 
 class CourseSelector extends HookWidget {
-  const CourseSelector(this.test, {Key key}) : super(key: key);
-
-  final String test;
+  const CourseSelector({Key key}) : super(key: key);
 
   @override
-  Widget build(BuildContext _context) => courseSelector(_context, test);
+  Widget build(BuildContext _context) => courseSelector(_context);
 }

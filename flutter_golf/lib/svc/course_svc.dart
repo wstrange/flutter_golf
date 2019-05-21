@@ -13,9 +13,19 @@ class CourseService {
   CourseService({Firestore firestore, FirebaseAuth auth})
       : _firestore = firestore ?? Firestore.instance;
 
-  Stream<List<Course>> getCourses() {
+  // Gets the course list as a stream - watches for modifications.
+  Stream<List<Course>> getCoursesStream() {
     var ref = _firestore.collection("courses");
     return ref.snapshots().map((list) =>
         list.documents.map((doc) => Course.fromMap(doc.data)).toList());
+  }
+
+  // Gets the Course list, but does not watch for additions.
+  Future<List<Course>> getCoursesList() async {
+    var ref = _firestore.collection("courses");
+    var docs = await ref.getDocuments();
+    return docs.documents
+        .map((snapshot) => Course.fromMap(snapshot.data))
+        .toList();
   }
 }

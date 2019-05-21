@@ -21,32 +21,66 @@ class Course {
 }
 
 class TeeSheet {
-  Map<DateTime, String> teeTimes = {};
-  TeeSheet(this.teeTimes);
+  static final available = Firestore.instance.document("/teetimes/available");
+  String courseID;
+  DateTime date = DateTime.now();
+  Map<DateTime, DocumentReference> teeTimes = {};
 
-  factory TeeSheet.fromJSON(Map m) {
-    var newmap = Map<DateTime, String>();
-    var inc = Duration(minutes: 9);
-    var n = DateTime.now();
-    m.forEach((k, v) {
-      var hour = (k as String).substring(0, 2);
-      var min = (k as String).substring(2);
-      var h = int.parse(hour);
-      var m = int.parse(min);
-      var d = DateTime(2019, 06, 30, h, m);
-      newmap[d] = v.toString();
-      n.add(inc);
+  TeeSheet({this.teeTimes, this.date});
+
+  factory TeeSheet.fromMap(Map m) {
+    //print("TeeSheet from map $m");
+    var x = m['teeTimes'];
+
+    var newmap = Map<DateTime, DocumentReference>();
+
+    x.forEach((date, v) {
+      var d = DateTime.parse(date);
+      newmap[d] = v as DocumentReference;
     });
-    return TeeSheet(newmap);
+
+    var ts = TeeSheet(teeTimes: newmap);
+    print("Created TeeSheet $ts");
+    return ts;
   }
+
+  // make an empty tee sheet for the date.
+  factory TeeSheet.empty(DateTime d) {
+    var t = TeeSheet(teeTimes: _emptyTeeSheet(d), date: d);
+    return t;
+  }
+
+  static Map<DateTime, DocumentReference> _emptyTeeSheet(DateTime d) {
+    // first tee time at 7 AM
+    var t = DateTime(d.year, d.month, d.day, 7, 0);
+    // last tee time
+    var end = DateTime(d.year, d.month, d.day, 18, 1);
+    var increment = Duration(minutes: 9);
+
+    var m = Map<DateTime, DocumentReference>();
+    while (t.isBefore(end)) {
+      m[t] = available;
+      t = t.add(increment);
+    }
+    return m;
+  }
+
+  Map<String, DocumentReference> teeTimesAsFirebaseMap() =>
+      teeTimes.map((date, ref) => MapEntry(date.toIso8601String(), ref));
+
+  String toString() => "TeeSheet date=$date, teeTimes = $teeTimes";
 }
 
+// A tee time consisting of a group of players, a time, a courseId.
 class Teetime {
+  String id;
   String bookedByUserID;
   DateTime time = DateTime.now();
   List<String> playerIDs = [];
   String courseID;
   String description;
+
+  Teetime({this.id});
 }
 
 // Firestore specific ...

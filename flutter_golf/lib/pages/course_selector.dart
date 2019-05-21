@@ -7,29 +7,32 @@ import '../model/models.dart';
 part 'course_selector.g.dart';
 
 @widget
-Widget courseSelector(BuildContext context, String test) {
+Widget courseSelector(BuildContext context) {
   final courseSvc = useMemoized(() => CourseService());
-  final courseSnapshot = useStream(courseSvc.getCourses());
+  final courseSnapshot = useStream(courseSvc.getCoursesStream());
+  final courseQuery = useFuture(courseSvc.getCoursesList());
+
   return Scaffold(
       appBar: AppBar(title: Text("Courses")),
       body: Column(
         children: <Widget>[
           Text("Courses"),
+//          Expanded(
+//            child: ListView(
+//              padding: const EdgeInsets.all(8.0),
+//              children: _courseList(courseSnapshot.data ?? []),
+//            ),
+//          ),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.all(8.0),
-              children: _courseList(courseSnapshot.data ?? []),
+              children: _courseList(courseQuery.data ?? []),
             ),
-          )
+          ),
         ],
       ));
 }
 
-List<Widget> _courseList(List<Course> courses) {
-  List<Widget> w = [];
-
-  courses.forEach((course) {
-    w.add(Card(child: Text("Course ${course.name}")));
-  });
-  return w;
-}
+List<Widget> _courseList(List<Course> courses) => courses
+    .map((course) => Card(child: Text("Course ${course.name}")))
+    .toList();

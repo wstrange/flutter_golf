@@ -8,7 +8,7 @@ import '../svc/teetimes_svc.dart';
 
 class CreateTeetimeBloc extends Bloc<CreateTeetimeEvent, CreateTeetimeState> {
   final FirebaseUser _user;
-  final TeetimeService _svc;
+  final TeeTimeService _svc;
   final FSTeetime _teetime;
 
   @override
@@ -16,7 +16,7 @@ class CreateTeetimeBloc extends Bloc<CreateTeetimeEvent, CreateTeetimeState> {
 
   CreateTeetimeBloc(this._user)
       //: _svc = TeetimeService(_user),
-      : _svc = TeetimeService(),
+      : _svc = TeeTimeService(),
         _teetime = FSTeetime(_user) {}
 
   @override

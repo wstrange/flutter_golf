@@ -5,13 +5,12 @@ import '../svc/teetimes_svc.dart';
 import 'bloc.dart';
 import 'teetime_form.dart';
 
-
 class CreateTeetimeScreen extends StatefulWidget {
-  final TeetimeService teetimeService;
+  final TeeTimeService teetimeService;
   final FirebaseUser user;
 
-  CreateTeetimeScreen({Key key, this.teetimeService, @required this.user}):
-        super(key: key);
+  CreateTeetimeScreen({Key key, this.teetimeService, @required this.user})
+      : super(key: key);
 
   State<CreateTeetimeScreen> createState() => _CreateTeetimeScreenState();
 }

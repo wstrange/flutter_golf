@@ -5,8 +5,7 @@ import 'package:provider/provider.dart';
 import 'authentication_bloc/bloc.dart';
 import 'teetimes/teetime_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'svc/repo_service.dart';
-import 'pages/teesheet_editor.dart';
+import 'pages/teesheet_page.dart';
 import 'pages/course_selector.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -37,7 +36,7 @@ class HomeScreen extends StatelessWidget {
           MaterialButton(
             child: Text("Generate Data"),
             onPressed: () async {
-              await RepoService().generateSampleData();
+              await TeeTimeService().generateSampleData();
             },
           ),
           MaterialButton(
@@ -47,17 +46,15 @@ class HomeScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                       builder: (context) => ChangeNotifierProvider(
-                          builder: (context) => TeetimeService(),
-                          child: TeeSheetPage())));
+                          builder: (context) => TeeTimeService(),
+                          child: TeeSheetPage2())));
             },
           ),
           MaterialButton(
             child: Text("Course Selector"),
             onPressed: () async {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => CourseSelector("test is cool")));
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => CourseSelector()));
             },
           ),
           FloatingActionButton(
