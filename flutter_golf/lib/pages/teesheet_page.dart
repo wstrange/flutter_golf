@@ -10,26 +10,22 @@ import '../model/models.dart';
 part 'teesheet_page.g.dart';
 
 @widget
-Widget teeSheetPage(BuildContext context) {
+Widget teeSheetPage(String courseId, DateTime date) {
   final svc = TeeTimeService();
-  String course = "ECS1WnnFLNrn2wPe8WUc";
-  //DateTime date = DateTime.now();
+  final stream = useMemoized(() => svc.getTeeSheetStream(courseId, date));
+  final teeTimeStream = useStream(stream);
 
   return SafeArea(
     child: Scaffold(
         appBar: AppBar(title: Text("Country Hills Talons")),
         body: Column(
           children: [
-            Expanded(child: HookBuilder(builder: (context) {
-              final teeTimeStream =
-                  useStream(svc.getTeeSheetStream(course, date));
-              _createTeeSheet(teeTimeStream);
-            })),
+            Expanded(child: _CreateTeeSheet(teeTimeStream)),
             MaterialButton(
               child: Text("Reload"),
               onPressed: () {
-                var d = DateTime.now();
-                svc.refreshTeeSheet(course, d);
+                var d = date;
+                svc.refreshTeeSheet(courseId, d);
               },
             )
           ],
@@ -37,61 +33,27 @@ Widget teeSheetPage(BuildContext context) {
   );
 }
 
-DateTime date = DateTime.now();
-
-class TeeSheetPage2 extends StatelessWidget {
-  final svc = TeeTimeService();
-  String course = "ECS1WnnFLNrn2wPe8WUc";
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-          appBar: AppBar(title: Text("Country Hills Talons")),
-          body: Column(
-            children: [
-              Expanded(child: HookBuilder(builder: (context) {
-                final teeTimeStream =
-                    useStream(svc.getTeeSheetStream(course, date));
-                return _createTeeSheet(teeTimeStream);
-              })),
-              MaterialButton(
-                child: Text("Reload"),
-                onPressed: () {
-                  var d = DateTime.now();
-                  svc.refreshTeeSheet(course, d);
-                },
-              )
-            ],
-          )),
-    );
-  }
-}
-
+@widget
 Widget _createTeeSheet(AsyncSnapshot<DocumentSnapshot> snap) {
   if (!snap.hasData) {
     return Text("Tee Sheet not available for this day!");
   }
 
-  print("Got data ${snap.data}");
-
   var teeTime = TeeSheet.fromMap(snap.data.data);
-  print("teeTime $teeTime");
-  //var times = snap.data.teeTimes;
   var times = teeTime.teeTimes;
-  print("tee Times $times");
+  //print("tee Times $times");
   var l = times.keys.toList()..sort();
   return ListView.builder(
       itemCount: times.length,
       itemBuilder: (context, position) {
         var k = l[position];
         var v = times[k].toString();
-        return _createTile(util.dateToHHMM(k), v);
+        return _CreateTile(util.dateToHHMM(k), v);
       });
 }
 
+@widget
 Widget _createTile(String time, String teeTimeRef) {
-  //print("Create tile $time $teeTimeRef");
   var t = "available";
   return Card(
     child: ListTile(
@@ -102,7 +64,7 @@ Widget _createTile(String time, String teeTimeRef) {
           Icon(Icons.keyboard_arrow_right, color: Colors.grey, size: 20.0),
       dense: true,
       onTap: () {
-        print("Tee time $time selected");
+        print("Tee time $time selected!");
       },
     ),
   );

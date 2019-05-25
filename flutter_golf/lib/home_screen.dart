@@ -47,7 +47,8 @@ class HomeScreen extends StatelessWidget {
                   MaterialPageRoute(
                       builder: (context) => ChangeNotifierProvider(
                           builder: (context) => TeeTimeService(),
-                          child: TeeSheetPage2())));
+                          child: TeeSheetPage(
+                              "ECS1WnnFLNrn2wPe8WUc", DateTime.now()))));
             },
           ),
           MaterialButton(
