@@ -6,7 +6,8 @@ import 'authentication_bloc/bloc.dart';
 import 'teetimes/teetime_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'pages/teesheet_page.dart';
-import 'pages/course_selector.dart';
+//import 'pages/course_selector.dart';
+import 'widgets/course_selector.dart';
 
 class HomeScreen extends StatelessWidget {
   final String name;
@@ -51,12 +52,8 @@ class HomeScreen extends StatelessWidget {
                               "ECS1WnnFLNrn2wPe8WUc", DateTime.now()))));
             },
           ),
-          MaterialButton(
-            child: Text("Course Selector"),
-            onPressed: () async {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => CourseSelector()));
-            },
+          Expanded(
+            child: CourseSelector(),
           ),
           FloatingActionButton(
               child: Icon(Icons.add),

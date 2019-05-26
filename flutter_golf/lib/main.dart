@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_golf/svc/teetimes_svc.dart';
 import 'util/simple_bloc_delegate.dart';
 import 'package:bloc/bloc.dart';
 import 'svc/user_repository.dart';
@@ -8,7 +7,6 @@ import 'authentication_bloc/bloc.dart';
 import 'splash_screen.dart';
 import 'home_screen.dart';
 import 'login/login.dart';
-import 'package:provider/provider.dart';
 
 void main() {
   BlocSupervisor().delegate = SimpleBlocDelegate();
