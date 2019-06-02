@@ -3,7 +3,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
 
-enum Status { Uninitialized, Authenticated, Authenticating, Unauthenticated }
+enum Status {
+  Uninitialized,
+  Authenticated,
+  Authenticating,
+  Unauthenticated,
+  Error
+}
 
 class UserRepository with ChangeNotifier {
   final FirebaseAuth _firebaseAuth;
@@ -51,10 +57,11 @@ class UserRepository with ChangeNotifier {
     try {
       _status = Status.Authenticating;
       notifyListeners();
-      _firebaseAuth.signInWithEmailAndPassword(
+      var user = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      if (user == null) return false;
       return true;
     } catch (e) {
       _status = Status.Unauthenticated;

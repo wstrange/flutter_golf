@@ -8,6 +8,7 @@ import 'dart:async';
 
 class TeeTimeService with ChangeNotifier {
   final Firestore _firestore;
+  final FirebaseAuth _firebaseAuth;
   //final FirebaseUser _user;
   final _ymdFormatter = new DateFormat('yyyy-MM-dd');
 
@@ -15,8 +16,8 @@ class TeeTimeService with ChangeNotifier {
   // Create the teeTime service. This is always done in the
   // the context of a current user.
   TeeTimeService({Firestore firestore, FirebaseAuth auth})
-      : _firestore = firestore ?? Firestore.instance;
-  //_firebaseAuth = auth ?? FirebaseAuth.instance;
+      : _firestore = firestore ?? Firestore.instance,
+        _firebaseAuth = auth ?? FirebaseAuth.instance;
 
   Future<DocumentReference> createTeetime(FSTeetime teetime) async {
     var docRef = await _firestore.collection("teetimes").add(teetime.data);
@@ -68,5 +69,19 @@ class TeeTimeService with ChangeNotifier {
     teeSheets
         .document(_ymdFormatter.format(t.date))
         .setData({"teeTimes": t.teeTimesAsFirebaseMap()});
+  }
+
+  Future<void> bookTeeTime(
+      String courseId, DateTime date, String teeTimeRef) async {
+    var user = await _firebaseAuth.currentUser();
+
+    var data = {
+      "course": "/courses/$courseId",
+      'createBy': user.uid,
+      'players': [user.uid],
+      'time': Timestamp.fromDate(date)
+    };
+
+    _firestore.collection("teetimes").add(data);
   }
 }

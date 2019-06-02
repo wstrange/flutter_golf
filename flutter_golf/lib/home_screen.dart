@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_golf/svc/teetimes_svc.dart';
+import 'package:flutter_golf/svc/user_repository.dart';
 import 'package:provider/provider.dart';
-import 'authentication_bloc/bloc.dart';
 import 'teetimes/teetime_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'pages/teesheet_page.dart';
@@ -21,13 +20,11 @@ class HomeScreen extends StatelessWidget {
         title: Text('Home'),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.exit_to_app),
-            onPressed: () {
-              BlocProvider.of<AuthenticationBloc>(context).dispatch(
-                LoggedOut(),
-              );
-            },
-          )
+              icon: Icon(Icons.exit_to_app),
+              onPressed: () {
+                var userRepo = Provider.of<UserRepository>(context);
+                userRepo.signOut();
+              })
         ],
       ),
       body: Column(
@@ -49,7 +46,8 @@ class HomeScreen extends StatelessWidget {
                       builder: (context) => ChangeNotifierProvider(
                           builder: (context) => TeeTimeService(),
                           child: TeeSheetPage(
-                              "ECS1WnnFLNrn2wPe8WUc", DateTime.now()))));
+                              courseId: "ECS1WnnFLNrn2wPe8WUc",
+                              date: DateTime.now()))));
             },
           ),
           Expanded(
