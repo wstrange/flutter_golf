@@ -7,26 +7,22 @@ import '../svc/teetimes_svc.dart';
 // Widget to book a tee time on the course at the given date and time
 
 class TeeTimePage extends HookWidget {
-  String courseId;
-  DateTime date;
-  String teeTimeRef;
+  TeeTime teeTime;
 
-  TeeTimePage({Key key, this.courseId, this.date, this.teeTimeRef})
-      : super(key: key);
+  TeeTimePage({Key key, this.teeTime}) : super(key: key);
 
   Widget build(BuildContext context) {
     final teeTimeSvc = useMemoized(() => TeeTimeService());
     return SafeArea(
       child: Scaffold(
-          appBar: AppBar(title: Text("Course $courseId")),
+          appBar: AppBar(title: Text("Course ${teeTime.courseID}")),
           body: Column(
             children: [
-              Text("date $date"),
-              Text('Booking tee time... for $courseId'),
+              Text("date ${teeTime.dateTime}"),
               RaisedButton(
                   child: Text("Book Time"),
                   onPressed: () {
-                    teeTimeSvc.bookTeeTime(courseId, date, teeTimeRef);
+                    teeTimeSvc.bookTeeTime(teeTime, 3);
                   }),
             ],
           )),

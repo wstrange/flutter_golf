@@ -4,7 +4,16 @@ import 'package:flutter/material.dart';
 import '../model/models.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../util/date_format.dart' as util;
 import 'dart:async';
+
+final _teeTimeTransformer =
+    StreamTransformer<QuerySnapshot, List<TeeTime>>.fromHandlers(
+        handleData: (snapshot, sink) {
+  var docSnaps = snapshot.documents;
+  var teeTimes = docSnaps.map((doc) => TeeTime.fromSnapshot(doc)).toList();
+  sink.add(teeTimes);
+});
 
 class TeeTimeService with ChangeNotifier {
   final Firestore _firestore;
@@ -25,63 +34,62 @@ class TeeTimeService with ChangeNotifier {
     return docRef;
   }
 
-  Future<TeeSheet> refreshTeeSheet(String course, DateTime date) async {
-    var t = _ymdFormatter.format(date);
-    var doc = _firestore
-        .collection("courses")
-        .document(course)
-        .collection("teeSheet")
-        .document(t);
-    print("$course  date=$t");
-    print("Getting doc = $doc");
-    var m = await doc.get();
+  Stream<List<TeeTime>> getTeeTimes(String courseId, DateTime date) {
+    var ref = _firestore.collection("teeTimes");
 
-    teeSheet = TeeSheet.fromMap(m.data);
+    var q = ref
+        .where("courseID", isEqualTo: courseId)
+        .where("yyyyMMdd", isEqualTo: util.dateTo_yyyyMMdd(date))
+        .orderBy("dateTime");
 
-    notifyListeners();
-    return teeSheet;
+    return q.snapshots().transform(_teeTimeTransformer);
   }
 
-  Stream<DocumentSnapshot> getTeeSheetStream(String courseID, DateTime date) {
-    var t = _ymdFormatter.format(date);
-    var doc = _firestore
-        .collection("courses")
-        .document(courseID)
-        .collection("teeSheet")
-        .document(t);
-    var s = doc.snapshots();
-    print("returning stream $s for ${doc.toString()}");
-    return s;
-    //StreamTransformer.fromHandlers( handleData: );
-    //return doc.snapshots().map((snap) => TeeSheet.fromMap(snap.data));
+  // Generate a list of empty tee times.
+  Future<void> generateTeeTimes(
+      String courseID, DateTime start, DateTime finish,
+      {Duration increment: const Duration(minutes: 9)}) async {
+    // todo: Check start < finish, doesnt span more than one day, etc.
+
+    // develeopment aide:
+    deleteTeeTimes(courseID, start, finish);
+
+    var time = start.add(Duration(seconds: 0));
+    while (time.compareTo(finish) <= 0) {
+      var teeTime = TeeTime(dateTime: time, courseID: courseID);
+      // insert into firestore
+      var doc = await _firestore.collection("teeTimes").add(teeTime.toMap());
+      time = time.add(increment);
+    }
   }
 
-  Future<void> generateSampleData() async {
-    var course = "ECS1WnnFLNrn2wPe8WUc";
+  // Todo: This is not recommended from a client side app;
+  Future<void> deleteTeeTimes(
+      String courseID, DateTime start, DateTime finish) async {
+    var q = _firestore
+        .collection("teeTimes")
+        .where("courseID", isEqualTo: courseID)
+        .where("dateTime", isGreaterThanOrEqualTo: start)
+        .where("dateTime", isLessThanOrEqualTo: finish);
 
-    var teeSheets = _firestore
-        .collection("courses")
-        .document(course)
-        .collection("teeSheet");
-    var t = TeeSheet.empty(DateTime.now());
-
-    // create a t sheet
-    teeSheets
-        .document(_ymdFormatter.format(t.date))
-        .setData({"teeTimes": t.teeTimesAsFirebaseMap()});
+    await q.getDocuments().then((snap) {
+      snap.documents.forEach((dSnap) => _firestore
+          .collection("teeTimes")
+          .document(dSnap.documentID)
+          .delete());
+    });
   }
 
-  Future<void> bookTeeTime(
-      String courseId, DateTime date, String teeTimeRef) async {
+  Future<void> bookTeeTime(TeeTime teeTime, int slots) async {
+    print("Book time $teeTime slots=$slots");
     var user = await _firebaseAuth.currentUser();
 
-    var data = {
-      "course": "/courses/$courseId",
-      'createBy': user.uid,
-      'players': [user.uid],
-      'time': Timestamp.fromDate(date)
-    };
+    teeTime.availableSpots -= slots;
+    teeTime.playerIDs = [user.uid];
 
-    _firestore.collection("teetimes").add(data);
+    _firestore
+        .collection("teeTimes")
+        .document(teeTime.id)
+        .updateData(teeTime.toMap());
   }
 }

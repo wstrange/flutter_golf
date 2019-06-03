@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../util/date_format.dart';
 
 class User {
   String email;
@@ -44,43 +45,64 @@ class TeeSheet {
     return ts;
   }
 
-  // make an empty tee sheet for the date.
-  factory TeeSheet.empty(DateTime d) {
-    var t = TeeSheet(teeTimes: _emptyTeeSheet(d), date: d);
-    return t;
-  }
-
-  static Map<DateTime, DocumentReference> _emptyTeeSheet(DateTime d) {
-    // first tee time at 7 AM
-    var t = DateTime(d.year, d.month, d.day, 7, 0);
-    // last tee time
-    var end = DateTime(d.year, d.month, d.day, 18, 1);
-    var increment = Duration(minutes: 9);
-
-    var m = Map<DateTime, DocumentReference>();
-    while (t.isBefore(end)) {
-      m[t] = available;
-      t = t.add(increment);
-    }
-    return m;
-  }
-
   Map<String, DocumentReference> teeTimesAsFirebaseMap() =>
       teeTimes.map((date, ref) => MapEntry(date.toIso8601String(), ref));
 
   String toString() => "TeeSheet date=$date, teeTimes = $teeTimes";
 }
 
+// represents the playerInfo subcollection
+class PlayerInfo {
+  String uid;
+  bool paid = false;
+  String displayName; // so we dont have to look up on uid?
+}
+
 // A tee time consisting of a group of players, a time, a courseId.
-class Teetime {
+class TeeTime {
   String id;
-  String bookedByUserID;
-  DateTime time = DateTime.now();
+  DateTime dateTime = DateTime.now();
+  Map<String, PlayerInfo> playerInfo = {};
   List<String> playerIDs = [];
   String courseID;
-  String description;
+  String notes;
+  String startingHole;
+  int availableSpots;
 
-  Teetime({this.id});
+  TeeTime(
+      {this.id,
+      this.dateTime,
+      this.playerIDs: const [],
+      this.courseID,
+      this.notes,
+      this.availableSpots: 4,
+      this.startingHole: "1"});
+
+  factory TeeTime.fromMap(String id, Map<String, Object> m) {
+    return TeeTime(
+        id: id,
+        dateTime: (m['dateTime'] as Timestamp).toDate(),
+        courseID: m['courseID'],
+        notes: m['notes'],
+        availableSpots: m['availableSpots'] as int,
+        startingHole: m['startingHole']);
+  }
+
+  factory TeeTime.fromSnapshot(DocumentSnapshot doc) {
+    return TeeTime.fromMap(doc.documentID, doc.data);
+  }
+
+  Map<String, Object> toMap() {
+    return {
+      'dateTime': Timestamp.fromDate(dateTime),
+      'courseID': courseID,
+      'playerIDs': playerIDs,
+      'notes': notes,
+      'yyyyMMdd': dateTo_yyyyMMdd(dateTime),
+      'availableSpots': availableSpots,
+      'startingHole': startingHole
+    };
+  }
 }
 
 // Firestore specific ...

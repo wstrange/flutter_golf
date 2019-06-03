@@ -34,7 +34,10 @@ class HomeScreen extends StatelessWidget {
           MaterialButton(
             child: Text("Generate Data"),
             onPressed: () async {
-              await TeeTimeService().generateSampleData();
+              var t = DateTime.now();
+              var start = DateTime(t.year, t.month, t.day, 7);
+              await TeeTimeService().generateTeeTimes("ECS1WnnFLNrn2wPe8WUc",
+                  start, start.add(Duration(hours: 10)));
             },
           ),
           MaterialButton(

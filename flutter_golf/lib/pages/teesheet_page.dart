@@ -14,7 +14,7 @@ class TeeSheetPage extends HookWidget {
 
   Widget build(BuildContext context) {
     final svc = TeeTimeService();
-    final stream = useMemoized(() => svc.getTeeSheetStream(courseId, date));
+    final stream = useMemoized(() => svc.getTeeTimes(courseId, date));
     final teeTimeStream = useStream(stream);
     return SafeArea(
       child: Scaffold(
@@ -31,7 +31,7 @@ class TeeSheetPage extends HookWidget {
 }
 
 class _CreateTeeSheet extends StatefulWidget {
-  final AsyncSnapshot<DocumentSnapshot> snap;
+  final AsyncSnapshot<List<TeeTime>> snap;
   final String courseId;
 
   _CreateTeeSheet({Key key, this.snap, this.courseId}) : super(key: key);
@@ -47,35 +47,29 @@ class _TeeSheetState extends State<_CreateTeeSheet> {
       return Text("Tee Sheet not available for this day!");
     }
 
-    var teeTime = TeeSheet.fromMap(widget.snap.data.data);
-    var times = teeTime.teeTimes;
+    var times = widget.snap.data;
     //print("tee Times $times");
-    var l = times.keys.toList()..sort();
     return ListView.builder(
         itemCount: times.length,
         itemBuilder: (context, position) {
-          var k = l[position];
-          var v = times[k].toString();
-          return _CreateTile(courseId: widget.courseId, time: k, teeTimeRef: v);
+          return _CreateTile(
+              courseId: widget.courseId, teeTime: times[position]);
         });
   }
 }
 
 class _CreateTile extends StatelessWidget {
   final String courseId;
-  final DateTime time;
-  final String teeTimeRef;
+  final TeeTime teeTime;
 
-  _CreateTile({Key key, this.courseId, this.time, this.teeTimeRef})
-      : super(key: key);
+  _CreateTile({Key key, this.courseId, this.teeTime}) : super(key: key);
 
   Widget build(BuildContext context) {
-    var t = "available";
     return Card(
       child: ListTile(
         contentPadding: EdgeInsets.symmetric(horizontal: 5.0, vertical: 2.0),
-        leading: Text(util.dateToHHMM(time)),
-        title: Text(t),
+        leading: Text(util.dateToHHMM(teeTime.dateTime)),
+        title: Text("Available: ${teeTime.availableSpots}"),
         trailing:
             Icon(Icons.keyboard_arrow_right, color: Colors.grey, size: 20.0),
         dense: true,
@@ -83,9 +77,7 @@ class _CreateTile extends StatelessWidget {
           Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => TeeTimePage(
-                      courseId: courseId, date: time, teeTimeRef: teeTimeRef)));
-          print("Tee time $time selected!");
+                  builder: (context) => TeeTimePage(teeTime: teeTime)));
         },
       ),
     );

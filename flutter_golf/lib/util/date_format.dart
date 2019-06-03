@@ -5,3 +5,7 @@ import "package:intl/intl.dart";
 final _hourMinute = DateFormat.jm();
 
 String dateToHHMM(DateTime d) => _hourMinute.format(d);
+
+final _ymdFormatter = new DateFormat('yyyyMMdd');
+
+String dateTo_yyyyMMdd(DateTime d) => _ymdFormatter.format(d);
