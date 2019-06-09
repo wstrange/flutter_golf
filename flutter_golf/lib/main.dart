@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'util/simple_bloc_delegate.dart';
 import 'package:bloc/bloc.dart';
-import 'svc/user_repository.dart';
-//import 'package:flutter_bloc/flutter_bloc.dart';
+import 'svc/services.dart';
 import 'splash_screen.dart';
 import 'home_screen.dart';
 //import 'login/login.dart';
@@ -29,7 +28,10 @@ class App extends StatelessWidget {
                 case Status.Error:
                   return LoginPage();
                 case Status.Authenticated:
-                  return HomeScreen(name: userRepo.user.email);
+                  return MultiProvider(providers: [
+                    Provider<CourseService>.value(value: CourseService()),
+                    Provider<TeeTimeService>.value(value: TeeTimeService())
+                  ], child: HomeScreen(name: userRepo.user.email));
               }
             })));
   }

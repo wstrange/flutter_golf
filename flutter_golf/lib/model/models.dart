@@ -62,8 +62,11 @@ class PlayerInfo {
 class TeeTime {
   String id;
   DateTime dateTime = DateTime.now();
+  // map to subcollection - if we use subcollections...
   Map<String, PlayerInfo> playerInfo = {};
-  List<String> playerIDs = [];
+  List<String> playerIDs = []; // id of players
+  // This is an optimization - so we dont need to fetch the associated ids..
+  List<String> playerDisplayNames = []; // names of players for display
   String courseID;
   String notes;
   String startingHole;
@@ -76,7 +79,8 @@ class TeeTime {
       this.courseID,
       this.notes,
       this.availableSpots: 4,
-      this.startingHole: "1"});
+      this.startingHole: "1",
+      this.playerDisplayNames});
 
   factory TeeTime.fromMap(String id, Map<String, Object> m) {
     return TeeTime(
@@ -85,7 +89,8 @@ class TeeTime {
         courseID: m['courseID'],
         notes: m['notes'],
         availableSpots: m['availableSpots'] as int,
-        startingHole: m['startingHole']);
+        startingHole: m['startingHole'],
+        playerDisplayNames: m['playerDisplayNames'] as List<String>);
   }
 
   factory TeeTime.fromSnapshot(DocumentSnapshot doc) {
@@ -97,42 +102,11 @@ class TeeTime {
       'dateTime': Timestamp.fromDate(dateTime),
       'courseID': courseID,
       'playerIDs': playerIDs,
+      'playerDisplayNames': playerDisplayNames,
       'notes': notes,
       'yyyyMMdd': dateTo_yyyyMMdd(dateTime),
       'availableSpots': availableSpots,
       'startingHole': startingHole
     };
   }
-}
-
-// Firestore specific ...
-
-class FSTeetime {
-  DocumentReference createdBy;
-  List<DocumentReference> players;
-  Timestamp time;
-  DocumentReference course;
-
-  FSTeetime(FirebaseUser creator) {
-    createdBy = Firestore.instance.collection("users").document(creator.uid);
-  }
-
-  void addPlayer(DocumentReference player) {
-    if (!players.contains(player)) players.add(player);
-  }
-
-  void removePlayer(DocumentReference player) {
-    players.remove(player);
-  }
-
-  void setCourse(String ref) {
-    course = Firestore.instance.collection("courses").document(ref);
-  }
-
-  Map<String, dynamic> get data => {
-        'createdBy': createdBy,
-        'players': players,
-        'time': time,
-        'course': course
-      };
 }

@@ -13,6 +13,7 @@ class TeeTimePage extends HookWidget {
 
   Widget build(BuildContext context) {
     final teeTimeSvc = useMemoized(() => TeeTimeService());
+    final numberSpots = useState( () => value: this.teeTime.availableSpots);
     return SafeArea(
       child: Scaffold(
           appBar: AppBar(title: Text("Course ${teeTime.courseID}")),
@@ -22,7 +23,7 @@ class TeeTimePage extends HookWidget {
               RaisedButton(
                   child: Text("Book Time"),
                   onPressed: () {
-                    teeTimeSvc.bookTeeTime(teeTime, 3);
+                    teeTimeSvc.bookTeeTime(teeTime, 1);
                   }),
             ],
           )),
