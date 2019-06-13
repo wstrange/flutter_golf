@@ -17,8 +17,9 @@ class CourseService {
   // Gets the course list as a stream - watches for modifications.
   Stream<List<Course>> getCoursesStream() {
     var ref = _firestore.collection("courses");
-    return ref.snapshots().map((list) =>
-        list.documents.map((doc) => Course.fromMap(doc.data)).toList());
+    return ref.snapshots().map((list) => list.documents
+        .map((doc) => Course.fromMap(doc.documentID, doc.data))
+        .toList());
   }
 
   // Gets the Course list, but does not watch for additions.
@@ -26,7 +27,7 @@ class CourseService {
     var ref = _firestore.collection("courses");
     var docs = await ref.getDocuments();
     return docs.documents
-        .map((snapshot) => Course.fromMap(snapshot.data))
+        .map((snapshot) => Course.fromMap(snapshot.documentID, snapshot.data))
         .toList();
   }
 
@@ -34,7 +35,7 @@ class CourseService {
   Future<Course> getCourse(String courseId) async {
     var ref = _firestore.collection("courses");
     var snap = await ref.document(courseId).get();
-    if (snap.exists) return Course.fromMap(snap.data);
+    if (snap.exists) return Course.fromMap(snap.documentID, snap.data);
     return null;
   }
 }

@@ -7,23 +7,25 @@ import '../model/models.dart';
 import 'package:provider/provider.dart';
 
 class TeeSheetPage extends HookWidget {
-  final String courseId;
+  final Course course;
   final DateTime date;
 
-  TeeSheetPage({Key key, this.courseId, this.date}) : super(key: key);
+  TeeSheetPage({Key key, this.course, this.date}) : super(key: key);
 
   Widget build(BuildContext context) {
     final svc = Provider.of<TeeTimeService>(context);
-    final stream = useMemoized(() => svc.getTeeTimes(courseId, date));
+    final stream = useMemoized(() => svc.getTeeTimes(course.id, date));
     final teeTimeStream = useStream(stream);
+
+    print("course =$course");
     return SafeArea(
       child: Scaffold(
-          appBar: AppBar(title: Text("Country Hills Talons")),
+          appBar: AppBar(title: Text(course.name)),
           body: Column(
             children: [
               Expanded(
-                  child:
-                      _CreateTeeSheet(snap: teeTimeStream, courseId: courseId)),
+                  child: _CreateTeeSheet(
+                      snap: teeTimeStream, courseId: course.id)),
             ],
           )),
     );
@@ -53,60 +55,6 @@ class _TeeSheetState extends State<_CreateTeeSheet> {
         itemBuilder: (context, position) {
           return _TeeTimeSlot(teeTime: times[position]);
         });
-  }
-}
-
-class _CreateTile extends StatelessWidget {
-  final String courseId;
-  final TeeTime teeTime;
-
-  _CreateTile({Key key, this.courseId, this.teeTime}) : super(key: key);
-
-  Widget build(BuildContext context) {
-    var availableSlots = teeTime.availableSpots > 0;
-    return Card(
-      child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 5.0, vertical: 2.0),
-        leading: Text(util.dateToHHMM(teeTime.dateTime)),
-        title: _SlotWidget(teeTime),
-        trailing:
-            Icon(Icons.keyboard_arrow_right, color: Colors.grey, size: 20.0),
-        dense: true,
-        onTap: () {
-          Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => TeeTimePage(teeTime: teeTime)));
-        },
-      ),
-    );
-  }
-}
-
-const max_slots = 4; // todo- get this from the tee sheet
-
-class _SlotWidget extends StatelessWidget {
-  final TeeTime _teeTime;
-
-  _SlotWidget(this._teeTime);
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: _genSLots(),
-    );
-  }
-
-  List<Widget> _genSLots() {
-    List<Widget> l = [];
-    for (int i = 0; i < 4; ++i) {
-      l.add(Container(
-        margin: EdgeInsets.all(1.0),
-        color: Colors.green,
-        child: Text("Available"),
-      ));
-    }
-    return l;
   }
 }
 

@@ -15,9 +15,13 @@ class Course {
   Map<DateTime, TeeSheet> teeSheets = {};
   Course({this.id, this.name});
 
-  factory Course.fromMap(Map<String, dynamic> m) {
-    return Course(name: m['name'], id: m['id']);
+  factory Course.fromMap(String id, Map<String, dynamic> m) {
+    // todo: Why is this being called over and over...
+    print("Make course from $m");
+    return Course(id: id, name: m['name']);
   }
+
+  String toString() => "Course(id=$id, name=$name";
 }
 
 class TeeSheet {
@@ -29,7 +33,6 @@ class TeeSheet {
   TeeSheet({this.teeTimes, this.date});
 
   factory TeeSheet.fromMap(Map m) {
-    //print("TeeSheet from map $m");
     var x = m['teeTimes'];
 
     var newmap = Map<DateTime, DocumentReference>();
