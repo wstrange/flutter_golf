@@ -1,10 +1,9 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../svc/teetimes_svc.dart';
+import 'package:flutter_golf/pages/teetime_page.dart';
+import 'package:flutter_golf/svc/teetimes_svc.dart';
 import '../util/date_format.dart' as util;
 import 'package:flutter_hooks/flutter_hooks.dart';
 import '../model/models.dart';
-import 'teetime_page.dart';
 import 'package:provider/provider.dart';
 
 class TeeSheetPage extends HookWidget {

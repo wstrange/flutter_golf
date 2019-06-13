@@ -8,4 +8,4 @@ String dateToHHMM(DateTime d) => _hourMinute.format(d);
 
 final _ymdFormatter = new DateFormat('yyyyMMdd');
 
-String dateTo_yyyyMMdd(DateTime d) => _ymdFormatter.format(d);
+String dateToYearMonthDay(DateTime d) => _ymdFormatter.format(d);

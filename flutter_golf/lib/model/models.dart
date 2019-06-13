@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../util/date_format.dart';
 
 class User {
@@ -104,7 +103,7 @@ class TeeTime {
       'playerIDs': playerIDs,
       'playerDisplayNames': playerDisplayNames,
       'notes': notes,
-      'yyyyMMdd': dateTo_yyyyMMdd(dateTime),
+      'yyyyMMdd': dateToYearMonthDay(dateTime),
       'availableSpots': availableSpots,
       'startingHole': startingHole
     };

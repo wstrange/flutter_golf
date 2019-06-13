@@ -28,18 +28,12 @@ class TeeTimeService with ChangeNotifier {
       : _firestore = firestore ?? Firestore.instance,
         _firebaseAuth = auth ?? FirebaseAuth.instance;
 
-  Future<DocumentReference> createTeetime(FSTeetime teetime) async {
-    var docRef = await _firestore.collection("teetimes").add(teetime.data);
-    // todo
-    return docRef;
-  }
-
   Stream<List<TeeTime>> getTeeTimes(String courseId, DateTime date) {
     var ref = _firestore.collection("teeTimes");
 
     var q = ref
         .where("courseID", isEqualTo: courseId)
-        .where("yyyyMMdd", isEqualTo: util.dateTo_yyyyMMdd(date))
+        .where("yyyyMMdd", isEqualTo: util.dateToYearMonthDay(date))
         .orderBy("dateTime");
 
     return q.snapshots().transform(_teeTimeTransformer);

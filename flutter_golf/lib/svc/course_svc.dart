@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 class CourseService {
   final Firestore _firestore;
+  Course _selectedCourse;
 
   TeeSheet teeSheet;
 
@@ -27,5 +28,13 @@ class CourseService {
     return docs.documents
         .map((snapshot) => Course.fromMap(snapshot.data))
         .toList();
+  }
+
+  // Todo: What if course does not exist?
+  Future<Course> getCourse(String courseId) async {
+    var ref = _firestore.collection("courses");
+    var snap = await ref.document(courseId).get();
+    if (snap.exists) return Course.fromMap(snap.data);
+    return null;
   }
 }
