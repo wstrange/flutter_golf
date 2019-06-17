@@ -17,7 +17,7 @@ class Course {
 
   factory Course.fromMap(String id, Map<String, dynamic> m) {
     // todo: Why is this being called over and over...
-    print("Make course from $m");
+    //print("Make course from $m");
     return Course(id: id, name: m['name']);
   }
 
@@ -85,17 +85,25 @@ class TeeTime {
       this.playerDisplayNames});
 
   factory TeeTime.fromMap(String id, Map<String, Object> m) {
+    // nasty. Firestore returns List<dynamic>. Find out
+    // better way to serialize.
+    List<String> dn = m['playerDisplayNames'] != null
+        ? List<String>.from(m['playerDisplayNames'])
+        : [];
+
     return TeeTime(
-        id: id,
-        dateTime: (m['dateTime'] as Timestamp).toDate(),
-        courseID: m['courseID'],
-        notes: m['notes'],
-        availableSpots: m['availableSpots'] as int,
-        startingHole: m['startingHole'],
-        playerDisplayNames: m['playerDisplayNames'] as List<String>);
+      id: id,
+      dateTime: (m['dateTime'] as Timestamp).toDate(),
+      courseID: m['courseID'],
+      notes: m['notes'],
+      availableSpots: m['availableSpots'] as int,
+      startingHole: m['startingHole'],
+      playerDisplayNames: dn,
+    );
   }
 
   factory TeeTime.fromSnapshot(DocumentSnapshot doc) {
+    print("Build TeeTime ${doc.documentID}");
     return TeeTime.fromMap(doc.documentID, doc.data);
   }
 

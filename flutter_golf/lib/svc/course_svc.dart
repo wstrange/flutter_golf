@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../model/models.dart';
-import 'package:intl/intl.dart';
 
 class CourseService {
   final Firestore _firestore;

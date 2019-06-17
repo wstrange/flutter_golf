@@ -8,38 +8,44 @@ import '../svc/teetimes_svc.dart';
 
 class TeeTimePage extends HookWidget {
   TeeTime teeTime;
+  Course course;
 
-  TeeTimePage({Key key, this.teeTime}) : super(key: key);
+  TeeTimePage({Key key, this.teeTime, this.course}) : super(key: key);
 
   Widget build(BuildContext context) {
-    //final teeTimeSvc = useMemoized(() => TeeTimeService());
     final teeTimeSvc = Provider.of<TeeTimeService>(context);
     var numberSpots = useState(this.teeTime.availableSpots);
-    var requestedSpots = useState(0);
+    var requestedSpots = useState(1);
 
     return SafeArea(
       child: Scaffold(
-          appBar: AppBar(title: Text("Course ${teeTime.courseID}")),
+          appBar: AppBar(title: Text("${course.name}")),
           body: Column(
             children: [
               Text("date ${teeTime.dateTime}"),
               Row(
                 children: <Widget>[
                   IconButton(
-                    color: Colors.red,
-                    icon: Icon(Icons.add),
-                    onPressed: () => numberSpots.value--,
-                  ),
+                      color: Colors.red,
+                      icon: Icon(Icons.add),
+                      onPressed: () {
+                        if (requestedSpots.value < numberSpots.value)
+                          requestedSpots.value = requestedSpots.value + 1;
+                      }),
                   IconButton(
                       icon: Icon(Icons.remove),
-                      onPressed: () => numberSpots.value++),
-                  Text("${numberSpots.value}"),
+                      onPressed: () {
+                        if (requestedSpots.value >= 1)
+                          requestedSpots.value = requestedSpots.value - 1;
+                      }),
+                  Text("Booked ${requestedSpots.value}"),
                 ],
               ),
               RaisedButton(
                   child: Text("Book Time"),
                   onPressed: () {
-                    teeTimeSvc.bookTeeTime(teeTime, 1);
+                    teeTimeSvc.bookTeeTime(
+                        course, teeTime, requestedSpots.value);
                   }),
             ],
           )),

@@ -6,26 +6,28 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import '../model/models.dart';
 import 'package:provider/provider.dart';
 
-class TeeSheetPage extends HookWidget {
+class TeeSheetPage extends StatelessWidget {
   final Course course;
   final DateTime date;
 
   TeeSheetPage({Key key, this.course, this.date}) : super(key: key);
 
   Widget build(BuildContext context) {
-    final svc = Provider.of<TeeTimeService>(context);
-    final stream = useMemoized(() => svc.getTeeTimes(course.id, date));
-    final teeTimeStream = useStream(stream);
+    print("Build TeeSheetPage");
+    var svc = Provider.of<TeeTimeService>(context);
+    var teeTimeStream = svc.getTeeTimes(course.id, date);
 
-    print("course =$course");
     return SafeArea(
       child: Scaffold(
           appBar: AppBar(title: Text(course.name)),
           body: Column(
             children: [
               Expanded(
-                  child: _CreateTeeSheet(
-                      snap: teeTimeStream, courseId: course.id)),
+                  child: StreamBuilder<List<TeeTime>>(
+                      stream: teeTimeStream,
+                      builder: (context, snapshot) {
+                        return _CreateTeeSheet(snap: snapshot, course: course);
+                      })),
             ],
           )),
     );
@@ -34,9 +36,9 @@ class TeeSheetPage extends HookWidget {
 
 class _CreateTeeSheet extends StatefulWidget {
   final AsyncSnapshot<List<TeeTime>> snap;
-  final String courseId;
+  final Course course;
 
-  _CreateTeeSheet({Key key, this.snap, this.courseId}) : super(key: key);
+  _CreateTeeSheet({Key key, this.snap, this.course}) : super(key: key);
 
   @override
   _TeeSheetState createState() => _TeeSheetState();
@@ -53,15 +55,16 @@ class _TeeSheetState extends State<_CreateTeeSheet> {
     return ListView.builder(
         itemCount: times.length,
         itemBuilder: (context, position) {
-          return _TeeTimeSlot(teeTime: times[position]);
+          return _TeeTimeSlot(teeTime: times[position], course: widget.course);
         });
   }
 }
 
 class _TeeTimeSlot extends StatelessWidget {
   final TeeTime teeTime;
+  final Course course;
 
-  _TeeTimeSlot({this.teeTime});
+  _TeeTimeSlot({this.teeTime, this.course});
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +90,8 @@ class _TeeTimeSlot extends StatelessWidget {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => TeeTimePage(teeTime: teeTime)));
+                        builder: (context) =>
+                            TeeTimePage(teeTime: teeTime, course: course)));
               },
             )
           ],

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_golf/pages/teesheet_page.dart';
 import 'package:flutter_golf/svc/services.dart';
 import 'package:provider/provider.dart';
 import 'widgets/course_selector.dart';
@@ -38,19 +37,6 @@ class HomeScreen extends StatelessWidget {
                       start.add(Duration(hours: 10)));
                 },
               ),
-//              MaterialButton(
-//                child: Text("Tee Sheet"),
-//                onPressed: () async {
-//                  Navigator.push(context, MaterialPageRoute(builder: (context) {
-//                    var csvc = Provider.of<CourseService>(context);
-//
-//                    var future = csvc.getCourse("ECS1WnnFLNrn2wPe8WUc");
-//
-//                    return TeeSheetPage(
-//                        courseId: "ECS1WnnFLNrn2wPe8WUc", date: DateTime.now());
-//                  }));
-//                },
-//              ),
               Expanded(child: CourseSelector()),
             ]));
   }

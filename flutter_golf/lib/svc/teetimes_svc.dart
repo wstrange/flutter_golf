@@ -3,17 +3,21 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../model/models.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 import '../util/date_format.dart' as util;
 import 'dart:async';
 
 final _teeTimeTransformer =
     StreamTransformer<QuerySnapshot, List<TeeTime>>.fromHandlers(
         handleData: (snapshot, sink) {
-  var docSnaps = snapshot.documents;
-  var teeTimes = docSnaps.map((doc) => TeeTime.fromSnapshot(doc)).toList();
-  sink.add(teeTimes);
-});
+          snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
+          var docSnaps = snapshot.documents;
+          var teeTimes =
+              docSnaps.map((doc) => TeeTime.fromSnapshot(doc)).toList();
+          sink.add(teeTimes);
+        },
+        handleDone: (sink) => print("Tee time transformer done"),
+        handleError: (error, stacktrace, sink) =>
+            print("** transformer error $error "));
 
 class TeeTimeService with ChangeNotifier {
   final Firestore _firestore;
@@ -30,11 +34,15 @@ class TeeTimeService with ChangeNotifier {
 
   Stream<List<TeeTime>> getTeeTimes(String courseId, DateTime date) {
     var ref = _firestore.collection("teeTimes");
+    var d = util.dateToYearMonthDay(date);
 
+    print("Get Stream for List of Tee Times courseId = $courseId, For $d");
     var q = ref
         .where("courseID", isEqualTo: courseId)
-        .where("yyyyMMdd", isEqualTo: util.dateToYearMonthDay(date))
+        .where("yyyyMMdd", isEqualTo: d)
         .orderBy("dateTime");
+
+    //q.snapshots().listen((event) => print("${event.documents}"));
 
     return q.snapshots().transform(_teeTimeTransformer);
   }
@@ -74,12 +82,21 @@ class TeeTimeService with ChangeNotifier {
     });
   }
 
-  Future<void> bookTeeTime(TeeTime teeTime, int slots) async {
+  Future<void> bookTeeTime(Course course, TeeTime teeTime, int slots) async {
     print("Book time $teeTime slots=$slots");
     var user = await _firebaseAuth.currentUser();
 
+    print("Book $slots at $course");
+
     teeTime.availableSpots -= slots;
+    // player booking time is slot 0
     teeTime.playerIDs = [user.uid];
+    teeTime.playerDisplayNames = [user.displayName];
+    // if they have guests, use their ID..
+    for (int i = 1; i < slots; ++i) {
+      teeTime.playerIDs.add(user.uid);
+      teeTime.playerDisplayNames.add(user.displayName);
+    }
 
     _firestore
         .collection("teeTimes")
