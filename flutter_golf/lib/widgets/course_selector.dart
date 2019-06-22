@@ -21,7 +21,7 @@ class CourseSelector extends StatelessWidget {
   }
 
   List<Widget> _build(BuildContext context, List<Course> courses) {
-    print("Building courses courses = $courses");
+    print("Building course widget = $courses");
     return courses
         .map((course) => Card(
             child: ListTile(

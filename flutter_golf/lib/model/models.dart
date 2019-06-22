@@ -12,7 +12,6 @@ class Course {
   String id;
   String name;
   GeoPoint location;
-  Map<DateTime, TeeSheet> teeSheets = {};
   Course({this.id, this.name});
 
   factory Course.fromMap(String id, Map<String, dynamic> m) {
@@ -22,35 +21,6 @@ class Course {
   }
 
   String toString() => "Course(id=$id, name=$name";
-}
-
-class TeeSheet {
-  static final available = Firestore.instance.document("/teetimes/available");
-  String courseID;
-  DateTime date = DateTime.now();
-  Map<DateTime, DocumentReference> teeTimes = {};
-
-  TeeSheet({this.teeTimes, this.date});
-
-  factory TeeSheet.fromMap(Map m) {
-    var x = m['teeTimes'];
-
-    var newmap = Map<DateTime, DocumentReference>();
-
-    x.forEach((date, v) {
-      var d = DateTime.parse(date);
-      newmap[d] = v as DocumentReference;
-    });
-
-    var ts = TeeSheet(teeTimes: newmap);
-    print("Created TeeSheet $ts");
-    return ts;
-  }
-
-  Map<String, DocumentReference> teeTimesAsFirebaseMap() =>
-      teeTimes.map((date, ref) => MapEntry(date.toIso8601String(), ref));
-
-  String toString() => "TeeSheet date=$date, teeTimes = $teeTimes";
 }
 
 // represents the playerInfo subcollection
@@ -103,7 +73,7 @@ class TeeTime {
   }
 
   factory TeeTime.fromSnapshot(DocumentSnapshot doc) {
-    print("Build TeeTime ${doc.documentID}");
+    // print("Build TeeTime ${doc.documentID}");
     return TeeTime.fromMap(doc.documentID, doc.data);
   }
 

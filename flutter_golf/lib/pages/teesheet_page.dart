@@ -2,31 +2,47 @@ import 'package:flutter/material.dart';
 import 'package:flutter_golf/pages/teetime_page.dart';
 import 'package:flutter_golf/svc/teetimes_svc.dart';
 import '../util/date_format.dart' as util;
-import 'package:flutter_hooks/flutter_hooks.dart';
 import '../model/models.dart';
 import 'package:provider/provider.dart';
 
-class TeeSheetPage extends StatelessWidget {
+class TeeSheetPage extends StatefulWidget {
   final Course course;
   final DateTime date;
 
-  TeeSheetPage({Key key, this.course, this.date}) : super(key: key);
+  TeeSheetPage({this.course, this.date});
+
+  @override
+  State<StatefulWidget> createState() {
+    return _TeeSheetPage();
+  }
+}
+
+class _TeeSheetPage extends State<TeeSheetPage> {
+  _TeeSheetPage();
+  TeeTimeService svc;
+  Stream<List<TeeTime>> teeTimeStream;
+
+  @override
+  void initState() {
+    super.initState();
+    svc = Provider.of<TeeTimeService>(context, listen: false);
+    teeTimeStream = svc.getTeeTimeStream(widget.course.id, widget.date);
+  }
 
   Widget build(BuildContext context) {
     print("Build TeeSheetPage");
-    var svc = Provider.of<TeeTimeService>(context);
-    var teeTimeStream = svc.getTeeTimes(course.id, date);
 
     return SafeArea(
       child: Scaffold(
-          appBar: AppBar(title: Text(course.name)),
+          appBar: AppBar(title: Text(widget.course.name)),
           body: Column(
             children: [
               Expanded(
                   child: StreamBuilder<List<TeeTime>>(
                       stream: teeTimeStream,
                       builder: (context, snapshot) {
-                        return _CreateTeeSheet(snap: snapshot, course: course);
+                        return _CreateTeeSheet(
+                            snap: snapshot, course: widget.course);
                       })),
             ],
           )),
@@ -71,42 +87,79 @@ class _TeeTimeSlot extends StatelessWidget {
     int openSpots = teeTime.availableSpots;
     if (openSpots < 0) openSpots = 0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Row(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    TeeTimePage(teeTime: teeTime, course: course)));
+      },
+      child: Card(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Icon(Icons.golf_course),
-            Text(
-              util.dateToHHMM(teeTime.dateTime),
-              style:
-                  TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: <Widget>[
+                Icon(Icons.golf_course),
+                Text(
+                  util.dateToHHMM(teeTime.dateTime),
+                  style: TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
-            for (int i = 0; i < openSpots; ++i) Icon(Icons.person_outline),
-            Expanded(child: SizedBox()),
-            RaisedButton(
-              child: Icon(Icons.chevron_right),
-              onPressed: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            TeeTimePage(teeTime: teeTime, course: course)));
-              },
-            )
+            ..._createPlayerRows(),
           ],
         ),
-        Card(
-          margin: EdgeInsets.all(4.0),
-          color: Colors.grey,
-          child: Row(
-            children: <Widget>[
-              Text("Availabe ${teeTime.availableSpots}"),
-              for (int i = 0; i < openSpots; ++i) Icon(Icons.person_outline),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
+  }
+
+  final playerTextStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 16);
+
+  List<Widget> _createPlayerRows() {
+    List<Row> rows = [];
+    int numPlayers = teeTime.playerDisplayNames.length;
+    int total = teeTime.availableSpots + numPlayers;
+    int playerIndex = 0;
+    var available = Expanded(
+      child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(6.0),
+            child: Text(
+              "Available",
+              style: playerTextStyle,
+            ),
+          ),
+          color: Colors.lightGreen),
+    );
+
+    int numRows = total ~/ 2;
+
+    for (int i = 0; i < numRows; ++i) {
+      List<Widget> _t = [];
+      for (int j = 0; j < 2; ++j) {
+        if (playerIndex < numPlayers)
+          _t.add(Expanded(
+              child: Card(
+                  color: Colors.transparent,
+                  child: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Text(
+                      teeTime.playerDisplayNames[playerIndex++],
+                      style: playerTextStyle,
+                    ),
+                  ))));
+        else
+          _t.add(available);
+      }
+      rows.add(Row(
+        children: _t,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      ));
+    }
+    return rows;
   }
 }

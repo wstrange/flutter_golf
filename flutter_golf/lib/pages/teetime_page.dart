@@ -7,8 +7,8 @@ import '../svc/teetimes_svc.dart';
 // Widget to book a tee time on the course at the given date and time
 
 class TeeTimePage extends HookWidget {
-  TeeTime teeTime;
-  Course course;
+  final TeeTime teeTime;
+  final Course course;
 
   TeeTimePage({Key key, this.teeTime, this.course}) : super(key: key);
 
@@ -43,9 +43,10 @@ class TeeTimePage extends HookWidget {
               ),
               RaisedButton(
                   child: Text("Book Time"),
-                  onPressed: () {
-                    teeTimeSvc.bookTeeTime(
+                  onPressed: () async {
+                    await teeTimeSvc.bookTeeTime(
                         course, teeTime, requestedSpots.value);
+                    Navigator.pop(context);
                   }),
             ],
           )),

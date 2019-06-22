@@ -2,14 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../model/models.dart';
-import 'package:intl/intl.dart';
 import '../util/date_format.dart' as util;
 import 'dart:async';
 
 final _teeTimeTransformer =
     StreamTransformer<QuerySnapshot, List<TeeTime>>.fromHandlers(
         handleData: (snapshot, sink) {
-          snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
+          //snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
           var docSnaps = snapshot.documents;
           var teeTimes =
               docSnaps.map((doc) => TeeTime.fromSnapshot(doc)).toList();
@@ -23,16 +22,13 @@ class TeeTimeService with ChangeNotifier {
   final Firestore _firestore;
   final FirebaseAuth _firebaseAuth;
   //final FirebaseUser _user;
-  final _ymdFormatter = new DateFormat('yyyy-MM-dd');
-
-  TeeSheet teeSheet;
   // Create the teeTime service. This is always done in the
   // the context of a current user.
   TeeTimeService({Firestore firestore, FirebaseAuth auth})
       : _firestore = firestore ?? Firestore.instance,
         _firebaseAuth = auth ?? FirebaseAuth.instance;
 
-  Stream<List<TeeTime>> getTeeTimes(String courseId, DateTime date) {
+  Stream<List<TeeTime>> getTeeTimeStream(String courseId, DateTime date) {
     var ref = _firestore.collection("teeTimes");
     var d = util.dateToYearMonthDay(date);
 
@@ -60,7 +56,7 @@ class TeeTimeService with ChangeNotifier {
     while (time.compareTo(finish) <= 0) {
       var teeTime = TeeTime(dateTime: time, courseID: courseID);
       // insert into firestore
-      var doc = await _firestore.collection("teeTimes").add(teeTime.toMap());
+      await _firestore.collection("teeTimes").add(teeTime.toMap());
       time = time.add(increment);
     }
   }

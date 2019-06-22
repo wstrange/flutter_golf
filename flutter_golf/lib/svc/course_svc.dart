@@ -4,10 +4,6 @@ import '../model/models.dart';
 
 class CourseService {
   final Firestore _firestore;
-  Course _selectedCourse;
-
-  TeeSheet teeSheet;
-
   // Create the teeTime service. This is always done in the
   // the context of a current user.
   CourseService({Firestore firestore, FirebaseAuth auth})
