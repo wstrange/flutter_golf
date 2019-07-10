@@ -17,7 +17,7 @@ class App extends StatelessWidget {
     return MultiProvider(
         providers: [
           Provider<CourseService>.value(value: CourseService()),
-          ChangeNotifierProvider<TeeTimeService>.value(value: TeeTimeService()),
+          Provider<TeeTimeService>.value(value: TeeTimeService()),
           ChangeNotifierProvider<UserRepository>.value(value: UserRepository())
         ],
         child: MaterialApp(

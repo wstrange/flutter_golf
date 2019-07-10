@@ -13,7 +13,7 @@ class CourseService {
   Stream<List<Course>> getCoursesStream() {
     var ref = _firestore.collection("courses");
     return ref.snapshots().map((list) => list.documents
-        .map((doc) => Course.fromMap(doc.documentID, doc.data))
+        .map((doc) => Course.fromFirestore(doc.documentID, doc.data))
         .toList());
   }
 
@@ -22,7 +22,8 @@ class CourseService {
     var ref = _firestore.collection("courses");
     var docs = await ref.getDocuments();
     return docs.documents
-        .map((snapshot) => Course.fromMap(snapshot.documentID, snapshot.data))
+        .map((snapshot) =>
+            Course.fromFirestore(snapshot.documentID, snapshot.data))
         .toList();
   }
 
@@ -30,7 +31,7 @@ class CourseService {
   Future<Course> getCourse(String courseId) async {
     var ref = _firestore.collection("courses");
     var snap = await ref.document(courseId).get();
-    if (snap.exists) return Course.fromMap(snap.documentID, snap.data);
+    if (snap.exists) return Course.fromFirestore(snap.documentID, snap.data);
     return null;
   }
 }

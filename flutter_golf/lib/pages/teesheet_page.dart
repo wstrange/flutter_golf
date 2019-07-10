@@ -1,77 +1,90 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_golf/pages/teetime_page.dart';
 import 'package:flutter_golf/svc/teetimes_svc.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import '../util/date_format.dart' as util;
 import '../model/models.dart';
 import 'package:provider/provider.dart';
 
-class TeeSheetPage extends StatefulWidget {
+final _textStyle = const TextStyle(fontWeight: FontWeight.bold, fontSize: 16);
+
+class TeeSheetPage extends HookWidget {
   final Course course;
-  final DateTime date;
+  DateTime date;
 
   TeeSheetPage({this.course, this.date});
 
-  @override
-  State<StatefulWidget> createState() {
-    return _TeeSheetPage();
-  }
-}
-
-class _TeeSheetPage extends State<TeeSheetPage> {
-  _TeeSheetPage();
   TeeTimeService svc;
   Stream<List<TeeTime>> teeTimeStream;
 
-  @override
-  void initState() {
-    super.initState();
-    svc = Provider.of<TeeTimeService>(context, listen: false);
-    teeTimeStream = svc.getTeeTimeStream(widget.course.id, widget.date);
-  }
-
   Widget build(BuildContext context) {
-    print("Build TeeSheetPage");
+    var svc = Provider.of<TeeTimeService>(context, listen: false);
+    var selectedDate = useState(this.date);
+    print(
+        "Build TeeSheetPage for course ${course.id} date ${selectedDate.value}");
+
+    var stream = useMemoized(
+        () => svc.getTeeTimeStream(course.id, selectedDate.value),
+        [course.id, selectedDate.value]);
+    var teeTimeSnap = useStream(stream);
 
     return SafeArea(
-      child: Scaffold(
-          appBar: AppBar(title: Text(widget.course.name)),
-          body: Column(
-            children: [
-              Expanded(
-                  child: StreamBuilder<List<TeeTime>>(
-                      stream: teeTimeStream,
-                      builder: (context, snapshot) {
-                        return _CreateTeeSheet(
-                            snap: snapshot, course: widget.course);
-                      })),
-            ],
-          )),
+        child: Scaffold(
+            appBar: AppBar(title: Text(course.name)),
+            body: Column(
+              children: <Widget>[
+                _dateTab(selectedDate),
+                Expanded(
+                    child: _CreateTeeSheet(snap: teeTimeSnap, course: course)),
+              ],
+            )));
+  }
+
+  // Render the top tab that lets the user update the course date
+  Widget _dateTab(ValueNotifier<DateTime> selectedDate) {
+    var s = util.dateToDay(selectedDate.value);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        IconButton(
+          icon: Icon(Icons.chevron_left),
+          onPressed: () => selectedDate.value =
+              selectedDate.value.subtract(const Duration(days: 1)),
+        ),
+        Expanded(
+            child: Text(
+          "$s",
+          textAlign: TextAlign.center,
+          style: _textStyle,
+        )),
+        IconButton(
+          icon: Icon(Icons.chevron_right),
+          onPressed: () => selectedDate.value =
+              selectedDate.value.add(const Duration(days: 1)),
+        ),
+      ],
     );
   }
 }
 
-class _CreateTeeSheet extends StatefulWidget {
+// todo: This can prolly be a statelesswidget... or just a method
+class _CreateTeeSheet extends HookWidget {
   final AsyncSnapshot<List<TeeTime>> snap;
   final Course course;
 
   _CreateTeeSheet({Key key, this.snap, this.course}) : super(key: key);
 
   @override
-  _TeeSheetState createState() => _TeeSheetState();
-}
-
-class _TeeSheetState extends State<_CreateTeeSheet> {
-  @override
   Widget build(BuildContext context) {
-    if (!widget.snap.hasData) {
+    if (!snap.hasData || snap.data.length == 0) {
       return Text("Tee Sheet not available for this day!");
     }
 
-    var times = widget.snap.data;
+    var times = snap.data;
     return ListView.builder(
         itemCount: times.length,
         itemBuilder: (context, position) {
-          return _TeeTimeSlot(teeTime: times[position], course: widget.course);
+          return _TeeTimeSlot(teeTime: times[position], course: course);
         });
   }
 }
@@ -110,56 +123,61 @@ class _TeeTimeSlot extends StatelessWidget {
                 ),
               ],
             ),
-            ..._createPlayerRows(),
+            _createPlayerRows(),
           ],
         ),
       ),
     );
   }
 
-  final playerTextStyle = TextStyle(fontWeight: FontWeight.bold, fontSize: 16);
+  // available widget
+  Widget _available = Card(
+      child: Padding(
+        padding: const EdgeInsets.all(6.0),
+        child: Text(
+          "Available",
+          style: _textStyle,
+        ),
+      ),
+      color: Colors.lightGreen);
 
-  List<Widget> _createPlayerRows() {
-    List<Row> rows = [];
-    int numPlayers = teeTime.playerDisplayNames.length;
+  // player or guest widget
+  Widget _playerText(String name) => Card(
+      color: Colors.transparent,
+      child: Padding(
+          padding: const EdgeInsets.all(6.0),
+          child: Text(name, style: _textStyle)));
+
+  Widget _createPlayerRows() {
+    int numPlayers = teeTime.playerNames.length;
     int total = teeTime.availableSpots + numPlayers;
-    int playerIndex = 0;
-    var available = Expanded(
-      child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(6.0),
-            child: Text(
-              "Available",
-              style: playerTextStyle,
-            ),
-          ),
-          color: Colors.lightGreen),
-    );
-
     int numRows = total ~/ 2;
 
-    for (int i = 0; i < numRows; ++i) {
-      List<Widget> _t = [];
-      for (int j = 0; j < 2; ++j) {
-        if (playerIndex < numPlayers)
-          _t.add(Expanded(
-              child: Card(
-                  color: Colors.transparent,
-                  child: Padding(
-                    padding: const EdgeInsets.all(6.0),
-                    child: Text(
-                      teeTime.playerDisplayNames[playerIndex++],
-                      style: playerTextStyle,
-                    ),
-                  ))));
-        else
-          _t.add(available);
-      }
-      rows.add(Row(
-        children: _t,
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      ));
+    List<Widget> _t = [];
+    teeTime.playerNames.forEach((name) {
+      _t.add(_playerText(name));
+      // todo: add guests of booking...
+    });
+
+    // the rest of the spots are available..
+    for (int i = 0; i < teeTime.availableSpots; ++i) _t.add(_available);
+
+    return Column(children: _createGrid(_t, 2));
+  }
+
+  // break up w into a list of rows - each row with column items
+  // Each element needs to be Expanded so it fills the row
+  List<Widget> _createGrid(List<Widget> w, int columns) {
+    var l = List<Widget>();
+    for (int i = 0; i < w.length; i += columns) {
+      l.add(Row(
+          children: w
+              .sublist(i, i + 2 <= w.length ? i + 2 : i + 1)
+              .map((w) => Expanded(
+                    child: w,
+                  ))
+              .toList()));
     }
-    return rows;
+    return l;
   }
 }

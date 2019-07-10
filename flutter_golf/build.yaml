@@ -1,6 +1,7 @@
 targets:
   $default:
     builders:
-      functional_widget:
+      json_serializable:
         options:
-          widgetType: hook
+          any_map: true
+          explicit_to_json: true

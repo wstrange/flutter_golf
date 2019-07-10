@@ -1,92 +1,135 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../util/date_format.dart';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'models.g.dart';
+
+// utility - convert a FB snapshot to  map that includes the doc id
+Map<String, dynamic> snap2Map(DocumentSnapshot snap) {
+  var m = Map<String, dynamic>();
+  snap.data.forEach((k, v) => m[k] = v);
+  m['id'] = snap.documentID;
+//  print("Doc id ${snap.documentID}");
+//  print("m = $m");
+  return m;
+}
+
+@JsonSerializable()
 class User {
   String email;
+  @JsonKey(nullable: false)
   String id;
 
   User({this.email, this.id});
+
+  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+
+  Map<String, dynamic> toJson() => _$UserToJson(this);
 }
 
+@JsonSerializable()
 class Course {
+  @JsonKey(includeIfNull: false)
   String id;
   String name;
-  GeoPoint location;
+  // todo: Find out out to serialize custom field
+  //GeoPoint location;
   Course({this.id, this.name});
 
-  factory Course.fromMap(String id, Map<String, dynamic> m) {
-    // todo: Why is this being called over and over...
-    //print("Make course from $m");
-    return Course(id: id, name: m['name']);
+  factory Course.fromJson(Map<String, dynamic> json) => _$CourseFromJson(json);
+
+  factory Course.fromFirestore(String id, Map<String, dynamic> j) {
+    return Course.fromJson(j)..id = id;
   }
+
+  Map<String, dynamic> toJson() => _$CourseToJson(this);
 
   String toString() => "Course(id=$id, name=$name";
 }
 
-// represents the playerInfo subcollection
-class PlayerInfo {
-  String uid;
+@JsonSerializable()
+class CourseMap {
+  Map<String, Course> courses;
+
+  CourseMap(this.courses);
+
+  factory CourseMap.fromJson(Map<String, dynamic> json) =>
+      _$CourseMapFromJson(json);
+
+  Map<String, dynamic> toJson() => _$CourseMapToJson(this);
+}
+
+// represents a booking of a tee time.
+//
+@JsonSerializable()
+class Booking {
+  String id;
+
+  @JsonKey(nullable: false)
+  String teeTimeRef;
+
+  @JsonKey(nullable: false)
+  // this is the id of the user that booked this slot.
+  // They might not be playing.
+  // The createdBY user can alter this reservation
+  String createdBy;
   bool paid = false;
-  String displayName; // so we dont have to look up on uid?
+  // String list of players - also include the createdBy user
+  // if they are playing. Any user in this list can cancel
+  // themselves, but not the reservation.
+  List<String> players = [];
+  // Todo: Do we make guets a sentinel value??
+  int guests = 0; // number of guests this player has invited
+
+  Booking(
+      this.teeTimeRef, this.createdBy, this.players, this.guests, this.paid);
+
+  factory Booking.fromJson(Map<String, dynamic> json) =>
+      _$BookingFromJson(json);
+
+  Map<String, dynamic> toJson() => _$BookingToJson(this);
 }
 
 // A tee time consisting of a group of players, a time, a courseId.
+@JsonSerializable()
 class TeeTime {
+  @JsonKey(nullable: false)
   String id;
   DateTime dateTime = DateTime.now();
-  // map to subcollection - if we use subcollections...
-  Map<String, PlayerInfo> playerInfo = {};
-  List<String> playerIDs = []; // id of players
-  // This is an optimization - so we dont need to fetch the associated ids..
-  List<String> playerDisplayNames = []; // names of players for display
+
+  @JsonKey(nullable: false)
   String courseID;
   String notes;
   String startingHole;
   int availableSpots;
+  // for speedy display - cache the names of the players.
+  @JsonKey(nullable: false)
+  List<String> playerNames = [];
+
+  // List of booking id linked to this time
+  @JsonKey(nullable: false)
+  List<String> bookingRefs = [];
 
   TeeTime(
       {this.id,
       this.dateTime,
-      this.playerIDs: const [],
       this.courseID,
-      this.notes,
+      this.notes = "",
       this.availableSpots: 4,
       this.startingHole: "1",
-      this.playerDisplayNames});
+      this.playerNames = const [],
+      this.bookingRefs = const []});
 
-  factory TeeTime.fromMap(String id, Map<String, Object> m) {
-    // nasty. Firestore returns List<dynamic>. Find out
-    // better way to serialize.
-    List<String> dn = m['playerDisplayNames'] != null
-        ? List<String>.from(m['playerDisplayNames'])
-        : [];
-
-    return TeeTime(
-      id: id,
-      dateTime: (m['dateTime'] as Timestamp).toDate(),
-      courseID: m['courseID'],
-      notes: m['notes'],
-      availableSpots: m['availableSpots'] as int,
-      startingHole: m['startingHole'],
-      playerDisplayNames: dn,
-    );
+  factory TeeTime.fromJson(Map<String, dynamic> json) {
+    //print("TeeTime.fromJson($json)  type=${json.runtimeType}");
+    try {
+      var x = _$TeeTimeFromJson(json);
+      return x;
+    } catch (e) {
+      print("Ex $e");
+    }
+    return null;
   }
 
-  factory TeeTime.fromSnapshot(DocumentSnapshot doc) {
-    // print("Build TeeTime ${doc.documentID}");
-    return TeeTime.fromMap(doc.documentID, doc.data);
-  }
-
-  Map<String, Object> toMap() {
-    return {
-      'dateTime': Timestamp.fromDate(dateTime),
-      'courseID': courseID,
-      'playerIDs': playerIDs,
-      'playerDisplayNames': playerDisplayNames,
-      'notes': notes,
-      'yyyyMMdd': dateToYearMonthDay(dateTime),
-      'availableSpots': availableSpots,
-      'startingHole': startingHole
-    };
-  }
+  Map<String, dynamic> toJson() => _$TeeTimeToJson(this);
 }

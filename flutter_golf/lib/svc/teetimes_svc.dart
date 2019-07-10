@@ -5,20 +5,39 @@ import '../model/models.dart';
 import '../util/date_format.dart' as util;
 import 'dart:async';
 
+// Converts a stream of firestore doc snapshots to a list
+// of TeeTimes
 final _teeTimeTransformer =
     StreamTransformer<QuerySnapshot, List<TeeTime>>.fromHandlers(
         handleData: (snapshot, sink) {
           //snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
           var docSnaps = snapshot.documents;
-          var teeTimes =
-              docSnaps.map((doc) => TeeTime.fromSnapshot(doc)).toList();
+          var teeTimes = docSnaps
+              .map((DocumentSnapshot doc) => TeeTime.fromJson(snap2Map(doc)))
+              .toList();
+          //print("Tee times = $teeTimes");
           sink.add(teeTimes);
         },
         handleDone: (sink) => print("Tee time transformer done"),
         handleError: (error, stacktrace, sink) =>
             print("** transformer error $error "));
 
-class TeeTimeService with ChangeNotifier {
+final _bookingTransformer =
+    StreamTransformer<QuerySnapshot, List<Booking>>.fromHandlers(
+        handleData: (snapshot, sink) {
+          snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
+          var docSnaps = snapshot.documents;
+          var booking = docSnaps
+              .map((DocumentSnapshot doc) => Booking.fromJson(snap2Map(doc)))
+              .toList();
+//print("Tee times = $teeTimes");
+          sink.add(booking);
+        },
+        handleDone: (sink) => print("Tee time transformer done"),
+        handleError: (error, stacktrace, sink) =>
+            print("** transformer error $error "));
+
+class TeeTimeService {
   final Firestore _firestore;
   final FirebaseAuth _firebaseAuth;
   //final FirebaseUser _user;
@@ -31,13 +50,19 @@ class TeeTimeService with ChangeNotifier {
   Stream<List<TeeTime>> getTeeTimeStream(String courseId, DateTime date) {
     var ref = _firestore.collection("teeTimes");
     var d = util.dateToYearMonthDay(date);
+    var start =
+        DateTime(date.year, date.month, date.day, 0, 1).toIso8601String();
+    var end =
+        DateTime(date.year, date.month, date.day, 23, 59).toIso8601String();
 
-    print("Get Stream for List of Tee Times courseId = $courseId, For $d");
+    print("Get Stream for List of Tee Times courseId = $courseId, For $date");
     var q = ref
         .where("courseID", isEqualTo: courseId)
-        .where("yyyyMMdd", isEqualTo: d)
+        .where("dateTime", isGreaterThanOrEqualTo: start)
+        .where("dateTime", isLessThanOrEqualTo: end)
         .orderBy("dateTime");
 
+    //var q = ref;
     //q.snapshots().listen((event) => print("${event.documents}"));
 
     return q.snapshots().transform(_teeTimeTransformer);
@@ -46,17 +71,17 @@ class TeeTimeService with ChangeNotifier {
   // Generate a list of empty tee times.
   Future<void> generateTeeTimes(
       String courseID, DateTime start, DateTime finish,
-      {Duration increment: const Duration(minutes: 9)}) async {
+      {Duration increment: const Duration(minutes: 20)}) async {
     // todo: Check start < finish, doesnt span more than one day, etc.
 
     // develeopment aide:
-    deleteTeeTimes(courseID, start, finish);
+    //deleteTeeTimes(courseID, start, finish);
 
     var time = start.add(Duration(seconds: 0));
     while (time.compareTo(finish) <= 0) {
       var teeTime = TeeTime(dateTime: time, courseID: courseID);
       // insert into firestore
-      await _firestore.collection("teeTimes").add(teeTime.toMap());
+      await _firestore.collection("teeTimes").add(teeTime.toJson());
       time = time.add(increment);
     }
   }
@@ -78,25 +103,57 @@ class TeeTimeService with ChangeNotifier {
     });
   }
 
-  Future<void> bookTeeTime(Course course, TeeTime teeTime, int slots) async {
+  Future<void> bookTeeTime(Course course, TeeTime teeTime,
+      [int slots = 1]) async {
     print("Book time $teeTime slots=$slots");
     var user = await _firebaseAuth.currentUser();
 
-    print("Book $slots at $course");
-
     teeTime.availableSpots -= slots;
-    // player booking time is slot 0
-    teeTime.playerIDs = [user.uid];
-    teeTime.playerDisplayNames = [user.displayName];
-    // if they have guests, use their ID..
-    for (int i = 1; i < slots; ++i) {
-      teeTime.playerIDs.add(user.uid);
-      teeTime.playerDisplayNames.add(user.displayName);
-    }
 
+    assert(teeTime.id != null);
+    var booking = Booking(teeTime.id, user.uid, [user.uid], 0, true);
+
+    var json = teeTime.toJson();
+    print("Book $slots at $course, payload = $json");
+
+    try {
+      print("Creating booking");
+      var r = await _firestore.collection("booking").add(booking.toJson());
+      var bid = r.documentID;
+      print("booking created ${bid}");
+
+      // update links in tee Time to this booking.
+      teeTime.bookingRefs.add(bid);
+      // This is wrong...
+      // TODO: Fix me
+      teeTime.playerNames.add(user.displayName);
+
+      print("Updating teeTime ${teeTime.toJson()}");
+      await _firestore
+          .collection("teeTimes")
+          .document(teeTime.id)
+          .updateData(json);
+    } catch (e) {
+      print("Exception trying to update the teeTime $e");
+      rethrow;
+    }
+  }
+
+  findUserTeeTimes() async {
+    var user = await _firebaseAuth.currentUser();
     _firestore
         .collection("teeTimes")
-        .document(teeTime.id)
-        .updateData(teeTime.toMap());
+        .where("booking.${user.uid}", isGreaterThanOrEqualTo: 0);
+  }
+
+  // Return a stream of Bookings linked to this tee time
+  Stream<List<Booking>> getBookingsForTeeTime(TeeTime teeTime) {
+    print("Get stream bookings for ${teeTime.id}");
+    assert(teeTime.id != null);
+    var q = _firestore
+        .collection("booking")
+        .where("teeTimeRef", isEqualTo: teeTime.id);
+
+    return q.snapshots().transform(_bookingTransformer);
   }
 }
