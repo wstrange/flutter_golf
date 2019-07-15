@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_golf/pages/teetime_page.dart';
-import 'package:flutter_golf/svc/teetimes_svc.dart';
+import 'package:flutter_golf/svc/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import '../util/date_format.dart' as util;
 import '../model/models.dart';
@@ -18,7 +18,7 @@ class TeeSheetPage extends HookWidget {
   Stream<List<TeeTime>> teeTimeStream;
 
   Widget build(BuildContext context) {
-    var svc = Provider.of<TeeTimeService>(context, listen: false);
+    var svc = Provider.of<FireStore>(context, listen: false).teeTimeService;
     var selectedDate = useState(this.date);
     print(
         "Build TeeSheetPage for course ${course.id} date ${selectedDate.value}");

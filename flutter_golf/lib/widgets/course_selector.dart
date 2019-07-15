@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_golf/model/models.dart';
 import 'package:flutter_golf/pages/teesheet_page.dart';
-import 'package:flutter_golf/svc/course_svc.dart';
+import 'package:flutter_golf/svc/fs_svc.dart';
 import 'package:provider/provider.dart';
 
 // https://stackoverflow.com/questions/55013944/cloud-firestore-keeps-re-downloading-documents-flutter
@@ -9,10 +9,10 @@ import 'package:provider/provider.dart';
 class CourseSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var svc = Provider.of<CourseService>(context);
+    var svc = Provider.of<FireStore>(context);
 
     return FutureBuilder<List<Course>>(
-        future: svc.getCoursesList(),
+        future: svc.courseService.getCoursesList(),
         builder: (context, AsyncSnapshot<List<Course>> snapshot) {
           if (!snapshot.hasData) return Text("No courses!");
 

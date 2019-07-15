@@ -74,11 +74,12 @@ class Booking {
   // The createdBY user can alter this reservation
   String createdBy;
   bool paid = false;
-  // String list of players - also include the createdBy user
+  // Map of playerId. The value is the display name
+  //- also include the createdBy user
   // if they are playing. Any user in this list can cancel
   // themselves, but not the reservation.
-  List<String> players = [];
-  // Todo: Do we make guets a sentinel value??
+  Map<String, String> players = {};
+  // Todo: Do we make guests a sentinel value??
   int guests = 0; // number of guests this player has invited
 
   Booking(

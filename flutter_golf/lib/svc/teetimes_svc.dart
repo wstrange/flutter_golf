@@ -103,18 +103,34 @@ class TeeTimeService {
     });
   }
 
-  Future<void> bookTeeTime(Course course, TeeTime teeTime,
-      [int slots = 1]) async {
+  // Create a booking.
+  Future<void> createBooking(Booking booking) async {
+    try {
+      print("Creating booking");
+      var r = await _firestore.collection("booking").add(booking.toJson());
+      var bid = r.documentID;
+      print("booking created ${bid}");
+
+      // todo: Update the tee time
+
+    } catch (e) {
+      print("Exception creating booking $e");
+      throw e;
+    }
+  }
+
+  Future<void> bookTeeTime(TeeTime teeTime, [int slots = 1]) async {
     print("Book time $teeTime slots=$slots");
     var user = await _firebaseAuth.currentUser();
 
     teeTime.availableSpots -= slots;
 
     assert(teeTime.id != null);
-    var booking = Booking(teeTime.id, user.uid, [user.uid], 0, true);
+    var booking =
+        Booking(teeTime.id, user.uid, {user.uid: user.displayName}, 0, true);
 
     var json = teeTime.toJson();
-    print("Book $slots at $course, payload = $json");
+    print("Book $slots  payload = $json");
 
     try {
       print("Creating booking");
@@ -155,5 +171,28 @@ class TeeTimeService {
         .where("teeTimeRef", isEqualTo: teeTime.id);
 
     return q.snapshots().transform(_bookingTransformer);
+  }
+
+  // Cancel the entire booking
+  // todo: This can be implemented partially by a trigger
+  // so that the user cancelling does not need write access to the
+  // teeTimes
+  Future<void> cancelBooking(TeeTime t, Booking b) async {
+    //var user = await _firebaseAuth.currentUser();
+    var players = b.players.values.toList();
+    //
+    try {
+      // first remove the booking from the tee times
+      // todo: Make this a trigger
+//      await _firestore.collection("teeTimes").document(t.id).updateData({
+//        "bookingRefs": FieldValue.arrayRemove([b.id]),
+//        "playerNames": FieldValue.arrayRemove(players)
+//      });
+      // now delete the booking
+      await _firestore.collection("booking").document(b.id).delete();
+      print("Canceled booking ${b.id}");
+    } catch (e) {
+      print("Exception $e");
+    }
   }
 }

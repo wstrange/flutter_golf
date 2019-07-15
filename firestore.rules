@@ -1,7 +1,24 @@
+rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+  	match /{document=**} {
+      	allow read: if request.auth.uid != null;
+    }
+    match /users/{user} {
+      allow create: if request.auth.uid != null;
+      allow update: if request.auth.uid == user;
+  	}
+    match /teeTimes/{document=**} {
+      allow read, write: if request.auth.uid != null;
+    }
+    match /courses/{document=**} {
+      allow read: if request.auth.uid != null;
+    }
+    match /booking/{document=**} {
+      allow create: if request.auth.uid != null;
+      allow update: if request.auth.uid != null;
+      allow delete: if request.auth.uid != null;
     }
   }
 }

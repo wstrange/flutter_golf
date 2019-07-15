@@ -6,6 +6,7 @@ import 'splash_screen.dart';
 import 'home_screen.dart';
 import 'pages/login_page.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_golf/svc/fs_svc.dart';
 
 void main() {
   BlocSupervisor().delegate = SimpleBlocDelegate();
@@ -16,8 +17,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
         providers: [
-          Provider<CourseService>.value(value: CourseService()),
-          Provider<TeeTimeService>.value(value: TeeTimeService()),
+          Provider<FireStore>.value(value: FireStore()),
           ChangeNotifierProvider<UserRepository>.value(value: UserRepository())
         ],
         child: MaterialApp(

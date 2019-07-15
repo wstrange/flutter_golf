@@ -2,25 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:provider/provider.dart';
 import '../model/models.dart';
-import '../svc/teetimes_svc.dart';
+import '../svc/services.dart';
 import '../util/date_format.dart' as util;
 
 // Widget to book a tee time on the course at the given date and time
 
-const TextStyle _style = TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold);
+const TextStyle _style = TextStyle(
+  fontSize: 20.0,
+  fontWeight: FontWeight.bold,
+);
 
 class TeeTimePage extends HookWidget {
   final TeeTime teeTime;
   final Course course;
+  FireStore svc;
 
   TeeTimePage({Key key, this.teeTime, this.course}) : super(key: key);
 
   Widget build(BuildContext context) {
     print("Build TeeTimePage");
     var s = util.dateToTeeTime(teeTime.dateTime);
-    final teeTimeSvc = Provider.of<TeeTimeService>(context, listen: false);
+    svc = Provider.of<FireStore>(context, listen: false);
     final resStream =
-        useMemoized(() => teeTimeSvc.getBookingsForTeeTime(teeTime));
+        useMemoized(() => svc.teeTimeService.getBookingsForTeeTime(teeTime));
     final bookings = useStream(resStream);
 
     return SafeArea(
@@ -42,9 +46,9 @@ class TeeTimePage extends HookWidget {
                 height: 10.0,
               ),
               RaisedButton(
-                  child: Text("Book Time"),
+                  child: Text("Create New Booking"),
                   onPressed: () async {
-                    await teeTimeSvc.bookTeeTime(course, teeTime);
+                    await svc.teeTimeService.bookTeeTime(teeTime);
                     Navigator.pop(context);
                   }),
             ],
@@ -57,33 +61,60 @@ class TeeTimePage extends HookWidget {
   List<Widget> _drawSlots(AsyncSnapshot<List<Booking>> bookSnap) {
     List<Widget> _t = [];
     if (bookSnap.hasData) {
-      // Draw player slots
+      // Iterate over each Booking
       bookSnap.data.forEach((b) {
         // todo: Create a wrapper here for the booking. Each booking is
         // independent.
-        var bw = List<Widget>();
+//        var bw = List<Widget>();
+//
+//        b.players.forEach((playerRef) {
+//          // todo: Need to lookup playerRef!!
+//          bw.add(_createCard(playerRef, onTap: () {
+//            print('Card tapped - player $playerRef}');
+//          }));
+//        });
+//
+//        var c = ListTile(leading: Icon(Icons.delete), title: Row(children: bw));
+//        // add
 
-        b.players.forEach((playerRef) {
-          // todo: Need to lookup playerRef!!
-          bw.add(_createCard(playerRef, onTap: () {
-            print('Card tapped - player $playerRef}');
-          }));
-        });
-
-        var c = ListTile(leading: Icon(Icons.delete), title: Row(children: bw));
-        // add
-        _t.add(c);
+        _t.add(BookingWidget(booking: b, teeTime: teeTime));
       });
     }
 
     // Add "free Slots"
     for (int i = 0; i < teeTime.availableSpots; ++i) {
-      _t.add(_createCard("Available", onTap: () {
-        print('Card tapped.');
+      _t.add(_createCard("Available", onTap: () async {
+        print('Available tapped.');
+        await svc.teeTimeService.bookTeeTime(teeTime);
       }));
     }
 
     return _t;
+  }
+
+  // Create the widget that displays a single booking
+  Widget _bookingWidget(Booking booking, TeeTime teeTime) {
+    var players = booking.players.keys.map((playerId) {
+      return Text("$playerId");
+    });
+    return Column(
+      children: <Widget>[
+        Center(
+            child: Text(
+          "${teeTime.dateTime}",
+          style: _style,
+        )),
+        ...players,
+        Row(
+          //crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            RaisedButton(child: Text("Add Player")),
+            RaisedButton(child: Text("Cancel"))
+          ],
+        )
+      ],
+    );
   }
 
   _createCard(String text, {GestureTapCallback onTap}) {
@@ -103,5 +134,81 @@ class TeeTimePage extends HookWidget {
             ),
           ),
         ));
+  }
+}
+
+class BookingWidget extends HookWidget {
+  final Booking booking;
+  final TeeTime teeTime;
+  FireStore svc;
+
+  BookingWidget({this.booking, this.teeTime});
+
+  @override
+  Widget build(BuildContext context) {
+    svc = Provider.of<FireStore>(context, listen: false);
+    // player selection map - set to false to start
+    var selectedMap =
+        useState(booking.players.map((k, v) => MapEntry(k, false)));
+    var selected = useState(false);
+
+    var players = booking.players.keys.map((playerId) {
+      var s = booking.players[playerId];
+      var t = CheckboxListTile(
+        value: selectedMap.value[playerId],
+        // toggle whether the player is selected or not
+        onChanged: ((b) {
+          var m = selectedMap.value;
+          m[playerId] = !m[playerId];
+          selected.value = m.containsValue(true);
+          print("selected = ${selected.value}");
+          selectedMap.notifyListeners();
+        }),
+        title: new Text(
+          s,
+          style: _style,
+        ),
+        controlAffinity: ListTileControlAffinity.leading,
+        //subtitle: new Text('Subtitle'),
+        //secondary: new Icon(Icons.archive),
+        activeColor: Colors.red,
+      );
+
+      //return Row(children: [Flexible(child: t)]);
+      return t;
+    });
+
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Text("teeTime Ref ${booking.teeTimeRef}"),
+          ],
+        ),
+        ...players,
+        Row(
+          //crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            RaisedButton(
+              child: Text("Add Player"),
+              onPressed: () {
+                print("Add player");
+                //svc.teeTimeService.bookTeeTime(teeTime)
+              },
+            ),
+            RaisedButton(
+                child: Text("Cancel Time"),
+                onPressed:
+                    selected.value ? () => _cancel(teeTime, booking) : null)
+          ],
+        )
+      ],
+    );
+  }
+
+  _cancel(TeeTime t, Booking b) {
+    print("Cancel Booking");
+    svc.teeTimeService.cancelBooking(t, b);
   }
 }
