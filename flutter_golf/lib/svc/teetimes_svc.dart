@@ -62,24 +62,21 @@ class TeeTimeService {
         .where("dateTime", isLessThanOrEqualTo: end)
         .orderBy("dateTime");
 
-    //var q = ref;
-    //q.snapshots().listen((event) => print("${event.documents}"));
-
     return q.snapshots().transform(_teeTimeTransformer);
   }
 
   // Generate a list of empty tee times.
-  Future<void> generateTeeTimes(
-      String courseID, DateTime start, DateTime finish,
-      {Duration increment: const Duration(minutes: 20)}) async {
+  Future<void> generateTeeTimes(Course course,
+      {DateTime start,
+      DateTime finish,
+      Duration increment: const Duration(minutes: 20)}) async {
     // todo: Check start < finish, doesnt span more than one day, etc.
 
-    // develeopment aide:
-    //deleteTeeTimes(courseID, start, finish);
-
+    if (start == null) start = DateTime.now();
+    if (finish == null) finish = start.add(Duration(hours: 8));
     var time = start.add(Duration(seconds: 0));
     while (time.compareTo(finish) <= 0) {
-      var teeTime = TeeTime(dateTime: time, courseID: courseID);
+      var teeTime = TeeTime(dateTime: time, courseID: course.id);
       // insert into firestore
       await _firestore.collection("teeTimes").add(teeTime.toJson());
       time = time.add(increment);
@@ -121,13 +118,14 @@ class TeeTimeService {
 
   Future<void> bookTeeTime(TeeTime teeTime, [int slots = 1]) async {
     print("Book time $teeTime slots=$slots");
-    var user = await _firebaseAuth.currentUser();
+    var u = await _firebaseAuth.currentUser();
+    var user = User.currentUser(u);
 
     teeTime.availableSpots -= slots;
 
     assert(teeTime.id != null);
-    var booking =
-        Booking(teeTime.id, user.uid, {user.uid: user.displayName}, 0, true);
+    var booking = Booking(teeTime: teeTime);
+    booking.addPlayer(user);
 
     var json = teeTime.toJson();
     print("Book $slots  payload = $json");
@@ -142,7 +140,7 @@ class TeeTimeService {
       teeTime.bookingRefs.add(bid);
       // This is wrong...
       // TODO: Fix me
-      teeTime.playerNames.add(user.displayName);
+      teeTime.players[user.id] = user;
 
       print("Updating teeTime ${teeTime.toJson()}");
       await _firestore
@@ -194,5 +192,16 @@ class TeeTimeService {
     } catch (e) {
       print("Exception $e");
     }
+  }
+
+  // Return a list of teeTimes for a course on this date
+  Future<List<TeeTime>> getTeeTimes(Course course, DateTime t) {
+    // hack. ToDo store a real date/Time
+    var s = t.toIso8601String().substring(0, 9);
+    _firestore
+        .collection("/teeTimes")
+        .where("courseId", isEqualTo: course.id)
+        .where("dateTime", startsWith(s))
+        .getDocuments();
   }
 }

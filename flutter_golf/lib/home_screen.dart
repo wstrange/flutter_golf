@@ -10,6 +10,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var svc = Provider.of<FireStore>(context, listen: false);
+
     return Scaffold(
         appBar: AppBar(
           title: Text('Home'),
@@ -27,14 +29,9 @@ class HomeScreen extends StatelessWidget {
             children: <Widget>[
               Center(child: Text('Welcome $name!')),
               MaterialButton(
-                child: Text("Generate Data"),
+                child: Text("Generate Sample Data"),
                 onPressed: () async {
-                  var t = DateTime.now();
-                  var start = DateTime(t.year, t.month, t.day, 7);
-                  await TeeTimeService().generateTeeTimes(
-                      "ECS1WnnFLNrn2wPe8WUc",
-                      start,
-                      start.add(Duration(hours: 10)));
+                  await svc.createSampleData();
                 },
               ),
               Expanded(child: CourseSelector()),

@@ -153,7 +153,7 @@ class BookingWidget extends HookWidget {
     var selected = useState(false);
 
     var players = booking.players.keys.map((playerId) {
-      var s = booking.players[playerId];
+      var p = booking.players[playerId];
       var t = CheckboxListTile(
         value: selectedMap.value[playerId],
         // toggle whether the player is selected or not
@@ -165,7 +165,7 @@ class BookingWidget extends HookWidget {
           selectedMap.notifyListeners();
         }),
         title: new Text(
-          s,
+          p.displayName,
           style: _style,
         ),
         controlAffinity: ListTileControlAffinity.leading,
@@ -182,7 +182,7 @@ class BookingWidget extends HookWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Text("teeTime Ref ${booking.teeTimeRef}"),
+            Text("teeTime Ref ${booking.teeTimeId}"),
           ],
         ),
         ...players,

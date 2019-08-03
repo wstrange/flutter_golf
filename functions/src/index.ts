@@ -6,20 +6,20 @@ import { FieldValue } from '@google-cloud/firestore';
 
 const admin = require('firebase-admin');
 
+//import admin = require('firebase-admin');
+
+
 admin.initializeApp(functions.config().firebase);
 
 const db = admin.firestore();
 
 // admin.initializeApp();
 
-
 // // Start writing Firebase Functions
 // // https://firebase.google.com/docs/functions/typescript
 //
-// export const helloWorld = functions.https.onRequest((request, response) => {
-//  response.send("Hello from Firebase!");
-// });
 
+// Triggered when a booking is deleted. Cleans up the associated references in the teeTime
 export const deleteBooking = functions.firestore.document('/booking/{bookingId}').onDelete( (doc,ctx) => {
     const booking = doc.data();
     const id = doc.id;
@@ -28,17 +28,20 @@ export const deleteBooking = functions.firestore.document('/booking/{bookingId}'
     console.log(`context is ${ctx.params.bookingId} doc = ${booking} teeTimeRef=${teeTime}`);
 
     // delete any references to this booking.
+
+    // get a reference to the teeTime
     const teeRef = db.collection("teeTimes").doc(teeTime);
 
-
-    console.log(booking);
+    // read the players array
     const p = booking && booking.players || null;
 
     console.log(`Updating teeTime - removing ${p}`);
-    console.log(p);
-    const players = Object.values(p);
-    console.log(Object.values(p));
 
+    // javascript objects are not the same as values.
+    const players = Object.values(p);
+
+
+    // Update the tee time - removin
     const r = teeRef.update({
         bookingRefs: FieldValue.arrayRemove(id),
         playerNames: FieldValue.arrayRemove(...players),
@@ -46,6 +49,47 @@ export const deleteBooking = functions.firestore.document('/booking/{bookingId}'
     });
 
     return r;
-
-
 });
+
+export const bookingWriteTrigger = functions.firestore.document('/booking/{bookingId}').onWrite( (change,context) => {
+    // context.params.bookingId
+    console.log(context)
+
+    const booking = change.after.data();
+    const bookingId = context.params.bookingId;
+
+    if (! booking)
+        return false;
+
+    console.log(change.before.data());
+    console.log(booking);
+    const teeTimeRef = booking.teeTimeRef;
+
+    if( ! teeTimeRef )
+    return false;
+
+
+
+    const teeTime = db.collection("teeTimes").doc(teeTimeRef);
+
+    teeTime.update({
+        bookingRefs: FieldValue.arrayUnion(bookingId),
+        playerNames: FieldValue.arrayRemove(...players),
+        availableSpots: FieldValue.increment(players.length)
+    });
+
+
+    return true
+});
+
+
+
+// setTimeout(async function() {
+//     try {
+
+
+//     }
+//     catch( error ) {
+//         console.error(error);
+//     }
+// });

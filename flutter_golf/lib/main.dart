@@ -6,7 +6,7 @@ import 'splash_screen.dart';
 import 'home_screen.dart';
 import 'pages/login_page.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_golf/svc/fs_svc.dart';
+import 'package:flutter_golf/svc/firestore_svc.dart';
 
 void main() {
   BlocSupervisor().delegate = SimpleBlocDelegate();

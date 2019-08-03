@@ -13,7 +13,7 @@ class CourseService {
   Stream<List<Course>> getCoursesStream() {
     var ref = _firestore.collection("courses");
     return ref.snapshots().map((list) => list.documents
-        .map((doc) => Course.fromFirestore(doc.documentID, doc.data))
+        .map((doc) => Course.fromJson(doc.data)..id = doc.documentID)
         .toList());
   }
 
@@ -22,16 +22,22 @@ class CourseService {
     var ref = _firestore.collection("courses");
     var docs = await ref.getDocuments();
     return docs.documents
-        .map((snapshot) =>
-            Course.fromFirestore(snapshot.documentID, snapshot.data))
+        .map((doc) => Course.fromJson(doc.data)..id = doc.documentID)
         .toList();
   }
 
   // Todo: What if course does not exist?
   Future<Course> getCourse(String courseId) async {
     var ref = _firestore.collection("courses");
-    var snap = await ref.document(courseId).get();
-    if (snap.exists) return Course.fromFirestore(snap.documentID, snap.data);
+    var doc = await ref.document(courseId).get();
+    if (doc.exists) return Course.fromJson(doc.data)..id = doc.documentID;
     return null;
+  }
+
+  Future<void> createCourse(Course course) async {
+    await _firestore
+        .collection("courses")
+        .document(course.id)
+        .setData(course.toJson());
   }
 }

@@ -149,13 +149,13 @@ class _TeeTimeSlot extends StatelessWidget {
           child: Text(name, style: _textStyle)));
 
   Widget _createPlayerRows() {
-    int numPlayers = teeTime.playerNames.length;
+    int numPlayers = teeTime.players.length;
     int total = teeTime.availableSpots + numPlayers;
     int numRows = total ~/ 2;
 
     List<Widget> _t = [];
-    teeTime.playerNames.forEach((name) {
-      _t.add(_playerText(name));
+    teeTime.players.forEach((id, user) {
+      _t.add(_playerText(user.displayName));
       // todo: add guests of booking...
     });
 

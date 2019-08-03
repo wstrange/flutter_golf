@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_golf/model/models.dart';
 import 'package:flutter_golf/pages/teesheet_page.dart';
-import 'package:flutter_golf/svc/fs_svc.dart';
+import 'package:flutter_golf/svc/firestore_svc.dart';
 import 'package:provider/provider.dart';
 
 // https://stackoverflow.com/questions/55013944/cloud-firestore-keeps-re-downloading-documents-flutter
