@@ -38,13 +38,14 @@ abstract class Profile implements Built<Profile, ProfileBuilder> {
 //    implements Built<FullUser, FullUserBuilder> {}
 
 abstract class Course implements Built<Course, CourseBuilder> {
-  @nullable
   String get id;
   String get name;
   // todo: Add firestore GeoPoint support
   //GeoPoint location;
 
-  factory Course([updates(CourseBuilder b)]) = _$Course;
+  factory Course([updates(CourseBuilder c)]) => _$Course((c) => c
+    ..id = _uuid.v1()
+    ..update(updates));
 
   Course._();
 
@@ -52,7 +53,6 @@ abstract class Course implements Built<Course, CourseBuilder> {
 }
 
 abstract class TeeTime implements Built<TeeTime, TeeTimeBuilder> {
-  @nullable
   String get id;
   DateTime get dateTime;
   String get courseId;
@@ -66,7 +66,9 @@ abstract class TeeTime implements Built<TeeTime, TeeTimeBuilder> {
   // List of booking id linked to this time
   BuiltList<String> get bookingRefs;
 
-  factory TeeTime([updates(TeeTimeBuilder b)]) = _$TeeTime;
+  factory TeeTime([updates(TeeTimeBuilder b)]) => _$TeeTime((t) => t
+    ..id = _uuid.v1()
+    ..update(updates));
 
   TeeTime._();
 
@@ -88,7 +90,6 @@ abstract class TeeTime implements Built<TeeTime, TeeTimeBuilder> {
     var d = startTime;
     while (d.compareTo(endTime) <= 0) {
       var t = TeeTime((t) => t
-        ..id = _uuid.v1()
         ..courseId = courseId
         ..dateTime = d
         ..availableSpots = 4

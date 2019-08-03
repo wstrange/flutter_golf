@@ -117,15 +117,12 @@ class _$CourseSerializer implements StructuredSerializer<Course> {
   Iterable<Object> serialize(Serializers serializers, Course object,
       {FullType specifiedType = FullType.unspecified}) {
     final result = <Object>[
+      'id',
+      serializers.serialize(object.id, specifiedType: const FullType(String)),
       'name',
       serializers.serialize(object.name, specifiedType: const FullType(String)),
     ];
-    if (object.id != null) {
-      result
-        ..add('id')
-        ..add(serializers.serialize(object.id,
-            specifiedType: const FullType(String)));
-    }
+
     return result;
   }
 
@@ -165,6 +162,8 @@ class _$TeeTimeSerializer implements StructuredSerializer<TeeTime> {
   Iterable<Object> serialize(Serializers serializers, TeeTime object,
       {FullType specifiedType = FullType.unspecified}) {
     final result = <Object>[
+      'id',
+      serializers.serialize(object.id, specifiedType: const FullType(String)),
       'dateTime',
       serializers.serialize(object.dateTime,
           specifiedType: const FullType(DateTime)),
@@ -186,12 +185,6 @@ class _$TeeTimeSerializer implements StructuredSerializer<TeeTime> {
           specifiedType:
               const FullType(BuiltList, const [const FullType(String)])),
     ];
-    if (object.id != null) {
-      result
-        ..add('id')
-        ..add(serializers.serialize(object.id,
-            specifiedType: const FullType(String)));
-    }
     if (object.notes != null) {
       result
         ..add('notes')
@@ -522,6 +515,9 @@ class _$Course extends Course {
       (new CourseBuilder()..update(updates)).build();
 
   _$Course._({this.id, this.name}) : super._() {
+    if (id == null) {
+      throw new BuiltValueNullFieldError('Course', 'id');
+    }
     if (name == null) {
       throw new BuiltValueNullFieldError('Course', 'name');
     }
@@ -628,6 +624,9 @@ class _$TeeTime extends TeeTime {
       this.players,
       this.bookingRefs})
       : super._() {
+    if (id == null) {
+      throw new BuiltValueNullFieldError('TeeTime', 'id');
+    }
     if (dateTime == null) {
       throw new BuiltValueNullFieldError('TeeTime', 'dateTime');
     }
