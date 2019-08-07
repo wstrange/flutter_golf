@@ -39,7 +39,7 @@ class FireStore {
     var t = DateTime(now.year, now.month, now.day, 7);
 
     try {
-      await courseService.createCourse(course);
+      // await courseService.createCourse(course);
 
       // delete tee time
       await deleteCollection("/teeTimes");

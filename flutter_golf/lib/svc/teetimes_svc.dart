@@ -9,7 +9,7 @@ import 'dart:async';
 final _teeTimeTransformer =
     StreamTransformer<QuerySnapshot, List<TeeTime>>.fromHandlers(
         handleData: (snapshot, sink) {
-          //snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
+          snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
           var docSnaps = snapshot.documents;
           var teeTimes = docSnaps
               .map((DocumentSnapshot doc) =>
@@ -51,16 +51,17 @@ class TeeTimeService {
   Stream<List<TeeTime>> getTeeTimeStream(String courseId, DateTime date) {
     var ref = _firestore.collection("teeTimes");
     var d = util.dateToYearMonthDay(date);
-    var start =
-        DateTime(date.year, date.month, date.day, 0, 1).toIso8601String();
-    var end =
-        DateTime(date.year, date.month, date.day, 23, 59).toIso8601String();
+    var start = DateTime(date.year, date.month, date.day, 0, 1);
+    var end = DateTime(date.year, date.month, date.day, 23, 59);
+
+    var ts = Timestamp.fromDate(start);
+    var te = Timestamp.fromDate(end);
 
     print("Get Stream for List of Tee Times courseId = $courseId, For $date");
     var q = ref
-        .where("courseID", isEqualTo: courseId)
-        .where("dateTime", isGreaterThanOrEqualTo: start)
-        .where("dateTime", isLessThanOrEqualTo: end)
+        .where("courseId", isEqualTo: courseId)
+        .where("dateTime", isGreaterThanOrEqualTo: ts)
+        .where("dateTime", isLessThanOrEqualTo: te)
         .orderBy("dateTime");
 
     return q.snapshots().transform(_teeTimeTransformer);

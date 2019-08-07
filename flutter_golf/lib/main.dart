@@ -25,12 +25,13 @@ class App extends StatelessWidget {
           switch (userRepo.status) {
             case Status.Uninitialized:
               return SplashScreen();
+            case Status.Authenticated:
+              return HomeScreen(name: userRepo.user.email);
             case Status.Unauthenticated:
             case Status.Authenticating:
             case Status.Error:
+            default:
               return LoginPage();
-            case Status.Authenticated:
-              return HomeScreen(name: userRepo.user.email);
           }
         })));
   }
