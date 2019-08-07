@@ -27,6 +27,11 @@ void main() {
     j = jsonSerializer.serialize(booking);
 
     print("booking $booking to json = $j");
+
+    var newBook = jsonSerializer.deserialize(j) as Booking;
+    var b2 = jsonSerializer.deserializeWith(Booking.serializer, j);
+
+    print("derialized = $newBook");
   });
 
   test("Serializes", () {});

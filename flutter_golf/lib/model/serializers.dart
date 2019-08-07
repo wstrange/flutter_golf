@@ -3,10 +3,8 @@
 // license that can be found in the LICENSE file.
 
 import 'package:built_collection/built_collection.dart';
-import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:built_value/standard_json_plugin.dart';
-import 'package:built_value/"
 import 'models.dart';
 
 part 'serializers.g.dart';
@@ -25,7 +23,7 @@ part 'serializers.g.dart';
 @SerializersFor([User, Booking, Course, TeeTime, Profile])
 final Serializers serializers = _$serializers;
 
-final jsonSerializer = (serializers.toBuilder()
-      ..addPlugin(StandardJsonPlugin())
-      //..addPlugin(Iso8601DateTimeSerializer))
-).build();
+final jsonSerializer = (serializers.toBuilder()..addPlugin(StandardJsonPlugin())
+    //..addPlugin(Iso8601DateTimeSerializer))
+    )
+    .build();

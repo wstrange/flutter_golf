@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:provider/provider.dart';
-import '../model/models.dart';
+import '../model/model.dart';
 import '../svc/services.dart';
 import '../util/date_format.dart' as util;
 
@@ -159,7 +159,8 @@ class BookingWidget extends HookWidget {
         // toggle whether the player is selected or not
         onChanged: ((b) {
           var m = selectedMap.value;
-          m[playerId] = !m[playerId];
+          // todo: Booking is immutable.
+          //m[playerId] = !m[playerId];
           selected.value = m.containsValue(true);
           print("selected = ${selected.value}");
           selectedMap.notifyListeners();

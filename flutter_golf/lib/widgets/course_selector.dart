@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_golf/model/models.dart';
+import '../model/model.dart';
 import 'package:flutter_golf/pages/teesheet_page.dart';
 import 'package:flutter_golf/svc/firestore_svc.dart';
 import 'package:provider/provider.dart';

@@ -122,7 +122,9 @@ abstract class Booking implements Built<Booking, BookingBuilder> {
   // can cancel the reservation
   BuiltMap<String, User> get players;
 
-  factory Booking([updates(BookingBuilder b)]) = _$Booking;
+  factory Booking([updates(BookingBuilder b)]) => _$Booking((b) => b
+    ..id = _uuid.v1()
+    ..update(updates));
 
   Booking._();
 

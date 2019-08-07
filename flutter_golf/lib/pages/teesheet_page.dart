@@ -3,8 +3,8 @@ import 'package:flutter_golf/pages/teetime_page.dart';
 import 'package:flutter_golf/svc/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import '../util/date_format.dart' as util;
-import '../model/models.dart';
 import 'package:provider/provider.dart';
+import '../model/model.dart';
 
 final _textStyle = const TextStyle(fontWeight: FontWeight.bold, fontSize: 16);
 

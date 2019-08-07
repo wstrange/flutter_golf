@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import '../model/models.dart';
+import '../model/model.dart';
 import '../util/date_format.dart' as util;
 import 'dart:async';
 
@@ -13,7 +12,8 @@ final _teeTimeTransformer =
           //snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
           var docSnaps = snapshot.documents;
           var teeTimes = docSnaps
-              .map((DocumentSnapshot doc) => TeeTime.fromJson(snap2Map(doc)))
+              .map((DocumentSnapshot doc) =>
+                  jsonSerializer.deserializeWith(TeeTime.serializer, doc.data))
               .toList();
           //print("Tee times = $teeTimes");
           sink.add(teeTimes);
@@ -28,7 +28,8 @@ final _bookingTransformer =
           snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
           var docSnaps = snapshot.documents;
           var booking = docSnaps
-              .map((DocumentSnapshot doc) => Booking.fromJson(snap2Map(doc)))
+              .map((DocumentSnapshot doc) =>
+                  jsonSerializer.deserializeWith(Booking.serializer, doc.data))
               .toList();
 //print("Tee times = $teeTimes");
           sink.add(booking);
@@ -66,7 +67,7 @@ class TeeTimeService {
   }
 
   // Generate a list of empty tee times.
-  Future<void> generateTeeTimes(Course course,
+  Future<void> genTeeTimes(Course course,
       {DateTime start,
       DateTime finish,
       Duration increment: const Duration(minutes: 20)}) async {
@@ -75,12 +76,18 @@ class TeeTimeService {
     if (start == null) start = DateTime.now();
     if (finish == null) finish = start.add(Duration(hours: 8));
     var time = start.add(Duration(seconds: 0));
-    while (time.compareTo(finish) <= 0) {
-      var teeTime = TeeTime(dateTime: time, courseID: course.id);
-      // insert into firestore
-      await _firestore.collection("teeTimes").add(teeTime.toJson());
-      time = time.add(increment);
-    }
+
+    var times = TeeTime.generateTeeTimes(
+        courseId: course.id,
+        startTime: start,
+        endTime: finish,
+        spacing: increment);
+    times.forEach((teeTime) async {
+      print("Add teetime $teeTime");
+      var json = jsonSerializer.serialize(teeTime);
+      print("Tee time json =$json");
+      await _firestore.collection("teeTimes").add(json);
+    });
   }
 
   // Todo: This is not recommended from a client side app;
@@ -104,7 +111,9 @@ class TeeTimeService {
   Future<void> createBooking(Booking booking) async {
     try {
       print("Creating booking");
-      var r = await _firestore.collection("booking").add(booking.toJson());
+      var r = await _firestore
+          .collection("booking")
+          .add(jsonSerializer.serialize(booking));
       var bid = r.documentID;
       print("booking created ${bid}");
 
@@ -117,40 +126,40 @@ class TeeTimeService {
   }
 
   Future<void> bookTeeTime(TeeTime teeTime, [int slots = 1]) async {
-    print("Book time $teeTime slots=$slots");
-    var u = await _firebaseAuth.currentUser();
-    var user = User.currentUser(u);
-
-    teeTime.availableSpots -= slots;
-
-    assert(teeTime.id != null);
-    var booking = Booking(teeTime: teeTime);
-    booking.addPlayer(user);
-
-    var json = teeTime.toJson();
-    print("Book $slots  payload = $json");
-
-    try {
-      print("Creating booking");
-      var r = await _firestore.collection("booking").add(booking.toJson());
-      var bid = r.documentID;
-      print("booking created ${bid}");
-
-      // update links in tee Time to this booking.
-      teeTime.bookingRefs.add(bid);
-      // This is wrong...
-      // TODO: Fix me
-      teeTime.players[user.id] = user;
-
-      print("Updating teeTime ${teeTime.toJson()}");
-      await _firestore
-          .collection("teeTimes")
-          .document(teeTime.id)
-          .updateData(json);
-    } catch (e) {
-      print("Exception trying to update the teeTime $e");
-      rethrow;
-    }
+//    print("Book time $teeTime slots=$slots");
+//    var u = await _firebaseAuth.currentUser();
+//    var user = User.currentUser(u);
+//
+//    teeTime.availableSpots -= slots;
+//
+//    assert(teeTime.id != null);
+//    var booking = Booking(teeTime: teeTime);
+//    booking.addPlayer(user);
+//
+//    var json = teeTime.toJson();
+//    print("Book $slots  payload = $json");
+//
+//    try {
+//      print("Creating booking");
+//      var r = await _firestore.collection("booking").add(booking.toJson());
+//      var bid = r.documentID;
+//      print("booking created ${bid}");
+//
+//      // update links in tee Time to this booking.
+//      teeTime.bookingRefs.add(bid);
+//      // This is wrong...
+//      // TODO: Fix me
+//      teeTime.players[user.id] = user;
+//
+//      print("Updating teeTime ${teeTime.toJson()}");
+//      await _firestore
+//          .collection("teeTimes")
+//          .document(teeTime.id)
+//          .updateData(json);
+//    } catch (e) {
+//      print("Exception trying to update the teeTime $e");
+//      rethrow;
+//    }
   }
 
   findUserTeeTimes() async {
@@ -201,7 +210,8 @@ class TeeTimeService {
     _firestore
         .collection("/teeTimes")
         .where("courseId", isEqualTo: course.id)
-        .where("dateTime", startsWith(s))
+        // todo: filter on date
+        //.where("dateTime", startsWith(s))
         .getDocuments();
   }
 }

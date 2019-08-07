@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import "teetimes_svc.dart";
 import "user_svc.dart";
 import "course_svc.dart";
-import '../model/models.dart';
+import '../model/model.dart';
 
 // Firestore services
 class FireStore {
@@ -33,8 +33,7 @@ class FireStore {
   createSampleData() async {
     // Generate a sample course;
 
-    var course = Course(name: "Country Hills Talons");
-    course.id = "talons";
+    var course = Course((c) => c..name = "Country Hills Talons");
 
     var now = DateTime.now();
     var t = DateTime(now.year, now.month, now.day, 7);
@@ -45,7 +44,7 @@ class FireStore {
       // delete tee time
       await deleteCollection("/teeTimes");
 
-      await teeTimeService.generateTeeTimes(course, start: t);
+      await teeTimeService.genTeeTimes(course, start: t);
 
       // get the first teeTime
       await teeTimeService.getTeeTimes(course, t);

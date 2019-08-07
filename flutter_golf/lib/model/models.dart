@@ -1,148 +1,134 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:json_annotation/json_annotation.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:built_collection/built_collection.dart';
+import 'package:built_value/built_value.dart';
+import 'package:built_value/serializer.dart';
+import 'package:uuid/uuid.dart';
 
 part 'models.g.dart';
 
-// utility - convert a FB snapshot to  map that includes the doc id
+var _uuid = Uuid();
 
-Map<String, dynamic> snap2Map(DocumentSnapshot snap) {
-  var m = Map<String, dynamic>();
-  snap.data.forEach((k, v) => m[k] = v);
-  m['id'] = snap.documentID;
-  return m;
+abstract class User implements Built<User, UserBuilder> {
+  @nullable
+  String get id;
+  String get displayName;
+  String get email;
+
+  factory User([updates(UserBuilder b)]) = _$User;
+
+  User._();
+
+  static Serializer<User> get serializer => _$userSerializer;
 }
 
-/// We have an object on every id.
-class FireStoreObject {
-  // The id is read, but is not written out to the object
-  @JsonKey(ignore: true)
-  String id;
+abstract class Profile implements Built<Profile, ProfileBuilder> {
+  // The uid of the user
+  String get id;
+  // todo: Add preferences, etc.
 
-  FireStoreObject();
+  factory Profile([updates(ProfileBuilder b)]) = _$Profile;
+
+  Profile._();
+
+  static Serializer<Profile> get serializer => _$profileSerializer;
 }
 
-@JsonSerializable()
-class User extends FireStoreObject {
-  String email;
-  String displayName;
-
-  User({this.email, this.displayName});
-
-  factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
-
-  Map<String, dynamic> toJson() => _$UserToJson(this);
-
-  static User currentUser(FirebaseUser user) =>
-      User(email: user.email, displayName: user.displayName)..id = user.uid;
-}
-
-@JsonSerializable()
-class Course extends FireStoreObject {
-  String name;
-  // todo: Find out out to serialize custom field
-  //GeoPoint location;
-  Course({this.name});
-
-  factory Course.fromJson(Map<String, dynamic> json) => _$CourseFromJson(json);
-
-  Map<String, dynamic> toJson() => _$CourseToJson(this);
-
-  String toString() => "Course(id=$id, name=$name";
-}
-
-@JsonSerializable()
-class CourseMap extends FireStoreObject {
-  Map<String, Course> courses;
-
-  CourseMap(this.courses);
-
-  factory CourseMap.fromJson(Map<String, dynamic> json) =>
-      _$CourseMapFromJson(json);
-
-  Map<String, dynamic> toJson() => _$CourseMapToJson(this);
-}
-
-// represents a booking of a tee time.
 //
-@JsonSerializable()
-class Booking extends FireStoreObject {
-  @JsonKey(nullable: false)
-  String teeTimeId;
+//abstract class FullUser extends Object
+//    with User
+//    implements Built<FullUser, FullUserBuilder> {}
 
-  @JsonKey(nullable: false)
-  String courseId;
+abstract class Course implements Built<Course, CourseBuilder> {
+  String get id;
+  String get name;
+  // todo: Add firestore GeoPoint support
+  //GeoPoint location;
 
-  @JsonKey(nullable: false)
+  factory Course([updates(CourseBuilder c)]) => _$Course((c) => c
+    ..id = _uuid.v1()
+    ..update(updates));
+
+  Course._();
+
+  static Serializer<Course> get serializer => _$courseSerializer;
+}
+
+abstract class TeeTime implements Built<TeeTime, TeeTimeBuilder> {
+  String get id;
+  DateTime get dateTime;
+  String get courseId;
+  @nullable
+  String get notes;
+  String get startingHole;
+  int get availableSpots;
+  // for speedy display - cache the names of the players.
+  BuiltMap<String, User> get players;
+
+  // List of booking id linked to this time
+  BuiltList<String> get bookingRefs;
+
+  factory TeeTime([updates(TeeTimeBuilder b)]) => _$TeeTime((t) => t
+    ..id = _uuid.v1()
+    ..update(updates));
+
+  TeeTime._();
+
+  static Serializer<TeeTime> get serializer => _$teeTimeSerializer;
+
+  // Generate a list of tee times for the given [courseId]
+  // Tee times start at [startTime] end at [endTime] spaced apart by [Duration]
+  static BuiltList<TeeTime> generateTeeTimes(
+      {String courseId,
+      DateTime startTime,
+      DateTime endTime,
+      Duration spacing = const Duration(minutes: 9)}) {
+    // todo: More sanity checks..
+    if (startTime.compareTo(endTime) >= 0)
+      throw new Exception("Start time is after end time");
+
+    var l = List<TeeTime>();
+
+    var d = startTime;
+    while (d.compareTo(endTime) <= 0) {
+      var t = TeeTime((t) => t
+        ..courseId = courseId
+        ..dateTime = d
+        ..availableSpots = 4
+        ..startingHole = "1");
+      l.add(t);
+      d = d.add(spacing);
+    }
+    return BuiltList<TeeTime>(l);
+  }
+}
+
+/// A booking (reservation) for a tee time.
+/// A TeeTime could have more than one booking.
+abstract class Booking implements Built<Booking, BookingBuilder> {
+  String get id;
+  String get teeTimeId;
+  String get courseId;
+
   // this is the id of the user that booked this slot.
   // They might not be playing.
   // The createdBY user can alter this reservation
-  User createdById;
-  bool paid = false;
+  User get createdByUser;
+
+  @nullable
+  bool get paid;
   // Map of players.
-  //- also include the createdBy user
+  //- also include the createdBy user, only
   // if they are playing. Any user in this list can cancel
-  // themselves, but not the reservation.
-  Map<String, User> players = {};
-  // Todo: Do we make guests a sentinel value??
-  int guests = 0; // number of guests this player has invited
+  // themselves, but not the reservation. Only the createdBy user
+  // can cancel the reservation
+  BuiltMap<String, User> get players;
 
-  Booking(
-      {TeeTime teeTime,
-      this.createdById,
-      this.players,
-      this.guests,
-      this.paid}) {
-    this.courseId = teeTime.courseID;
-  }
+  factory Booking([updates(BookingBuilder b)]) => _$Booking((b) => b
+    ..id = _uuid.v1()
+    ..update(updates));
 
-  void addPlayer(User u) => players[u.id] = u;
-  void addPlayers(List<User> users) => users.forEach((u) => addPlayer(u));
+  Booking._();
 
-  factory Booking.fromJson(Map<String, dynamic> json) =>
-      _$BookingFromJson(json);
+  static Serializer<Booking> get serializer => _$bookingSerializer;
 
-  Map<String, dynamic> toJson() => _$BookingToJson(this);
-}
-
-// A tee time consisting of a group of players, a time, a courseId.
-@JsonSerializable()
-class TeeTime extends FireStoreObject {
-  DateTime dateTime = DateTime.now();
-
-  @JsonKey(nullable: false)
-  String courseID;
-  String notes;
-  String startingHole;
-  int availableSpots;
-  // for speedy display - cache the names of the players.
-  @JsonKey(nullable: false)
-  Map<String, User> players = {};
-
-  // List of booking id linked to this time
-  @JsonKey(nullable: false)
-  List<String> bookingRefs = [];
-
-  TeeTime(
-      {this.dateTime,
-      this.courseID,
-      this.notes = "",
-      this.availableSpots: 4,
-      this.startingHole: "1",
-      this.players = const {},
-      this.bookingRefs = const []});
-
-  factory TeeTime.fromJson(Map<String, dynamic> json) {
-    //print("TeeTime.fromJson($json)  type=${json.runtimeType}");
-    // for debugging..
-    try {
-      var x = _$TeeTimeFromJson(json);
-      return x;
-    } catch (e) {
-      print("Ex $e");
-    }
-    return null;
-  }
-
-  Map<String, dynamic> toJson() => _$TeeTimeToJson(this);
+  //tatic Booking createBooking({String courseId, String teeTimeId, User createdBy})
 }

@@ -2,16 +2,17 @@
 ///
 ///
 
-import '../model.dart';
+import 'models.dart';
+import 'serializers.dart';
 import 'package:uuid/uuid.dart';
 
 var uuid = Uuid();
 
-generate_data(int num_users, int num_courses) {
+generate_data(int numUsers, int numCourses) {
   var users = List<User>();
 
   // add some users
-  for (int i = 0; i < num_users; ++i) {
+  for (int i = 0; i < numUsers; ++i) {
     users.add(User((u) => u
       ..id = "$i"
       ..displayName = "user$i"
@@ -22,7 +23,7 @@ generate_data(int num_users, int num_courses) {
 
   // courses
   var courses = List<Course>();
-  for (int i = 0; i < num_courses; ++i) {
+  for (int i = 0; i < numCourses; ++i) {
     courses.add(Course((c) => c..name = "Course$i"));
   }
 
