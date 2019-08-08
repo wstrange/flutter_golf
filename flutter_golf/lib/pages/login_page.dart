@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_golf/svc/user_repository.dart';
+import 'package:flutter_golf/svc/user_svc.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
@@ -10,7 +10,7 @@ const style = TextStyle(fontFamily: 'Montserrat', fontSize: 20.0);
 
 class LoginPage extends HookWidget {
   Widget build(BuildContext context) {
-    final repo = Provider.of<UserRepository>(context);
+    final repo = Provider.of<UserService>(context);
     final userRepo = useListenable(repo);
 
     final _email = useMemoized(() => TextEditingController(text: ""));
@@ -96,7 +96,7 @@ class LoginPage extends HookWidget {
                   : Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: SignInButton(Buttons.Google, onPressed: () async {
-                        await Provider.of<UserRepository>(context)
+                        await Provider.of<UserService>(context)
                             .signInWithGoogle();
                       }),
                     )

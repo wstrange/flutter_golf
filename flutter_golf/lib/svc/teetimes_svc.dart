@@ -87,7 +87,10 @@ class TeeTimeService {
       //print("Add teetime $teeTime");
       var json = jsonSerializer.serializeWith(TeeTime.serializer, teeTime);
       print("Tee time json =$json");
-      await _firestore.collection("teeTimes").add(json);
+      await _firestore
+          .collection("teeTimes")
+          .document(teeTime.id)
+          .setData(json);
     });
   }
 
@@ -114,11 +117,10 @@ class TeeTimeService {
       print("Creating booking");
       var r = await _firestore
           .collection("booking")
-          .add(jsonSerializer.serializeWith(Booking.serializer, booking));
-      var bid = r.documentID;
-      print("booking created ${bid}");
-
-      // todo: Update the tee time
+          .document(booking.id)
+          .setData(jsonSerializer.serializeWith(Booking.serializer, booking));
+      print("booking created ${booking.id}");
+      // todo update the tee time
 
     } catch (e) {
       print("Exception creating booking $e");
@@ -126,41 +128,24 @@ class TeeTimeService {
     }
   }
 
-  Future<void> bookTeeTime(TeeTime teeTime, [int slots = 1]) async {
-    print("Book time $teeTime slots=$slots");
-    var u = await _firebaseAuth.currentUser();
-//    var user = User.currentUser(u);
+  Future<void> bookTeeTime(TeeTime teeTime, User user, [int slots = 1]) async {
+    print("Book time $teeTime slots=$slots  user=$user");
 
-//    teeTime.availableSpots -= slots;
-//
-//    assert(teeTime.id != null);
-//    var booking = Booking(teeTime: teeTime);
-//    booking.addPlayer(user);
-//
-//    var json = teeTime.toJson();
-//    print("Book $slots  payload = $json");
-//
-//    try {
-//      print("Creating booking");
-//      var r = await _firestore.collection("booking").add(booking.toJson());
-//      var bid = r.documentID;
-//      print("booking created ${bid}");
-//
-//      // update links in tee Time to this booking.
-//      teeTime.bookingRefs.add(bid);
-//      // This is wrong...
-//      // TODO: Fix me
-//      teeTime.players[user.id] = user;
-//
-//      print("Updating teeTime ${teeTime.toJson()}");
-//      await _firestore
-//          .collection("teeTimes")
-//          .document(teeTime.id)
-//          .updateData(json);
-//    } catch (e) {
-//      print("Exception trying to update the teeTime $e");
-//      rethrow;
-//    }
+    var booking = Booking((b) => b
+      ..players.addAll({user.id: user})
+      ..createdByUser = user.toBuilder()
+      ..courseId = teeTime.courseId
+      ..paid = true
+      ..teeTimeId = teeTime.id);
+
+    await createBooking(booking);
+
+    print("Updating teeTime id ${teeTime.id}");
+    await _firestore.collection("teeTimes").document(teeTime.id).updateData({
+      "bookingRefs": FieldValue.arrayUnion([booking.id])
+    });
+
+    // update the teeTime to reference the booking
   }
 
   findUserTeeTimes() async {

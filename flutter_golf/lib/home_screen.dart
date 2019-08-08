@@ -19,7 +19,7 @@ class HomeScreen extends StatelessWidget {
             IconButton(
                 icon: Icon(Icons.exit_to_app),
                 onPressed: () {
-                  var userRepo = Provider.of<UserRepository>(context);
+                  var userRepo = Provider.of<UserService>(context);
                   userRepo.signOut();
                 })
           ],

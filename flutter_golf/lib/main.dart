@@ -15,10 +15,10 @@ class App extends StatelessWidget {
     return MultiProvider(
         providers: [
           Provider<FireStore>.value(value: FireStore()),
-          ChangeNotifierProvider<UserRepository>.value(value: UserRepository())
+          ChangeNotifierProvider<UserService>.value(value: UserService())
         ],
         child: MaterialApp(
-            home: Consumer<UserRepository>(builder: (context, userRepo, child) {
+            home: Consumer<UserService>(builder: (context, userRepo, child) {
           switch (userRepo.status) {
             case Status.Uninitialized:
               return SplashScreen();

@@ -48,7 +48,8 @@ class TeeTimePage extends HookWidget {
               RaisedButton(
                   child: Text("Create New Booking"),
                   onPressed: () async {
-                    await svc.teeTimeService.bookTeeTime(teeTime);
+                    var user = svc.userService.user;
+                    await svc.teeTimeService.bookTeeTime(teeTime, user);
                     Navigator.pop(context);
                   }),
             ],
@@ -85,7 +86,8 @@ class TeeTimePage extends HookWidget {
     for (int i = 0; i < teeTime.availableSpots; ++i) {
       _t.add(_createCard("Available", onTap: () async {
         print('Available tapped.');
-        await svc.teeTimeService.bookTeeTime(teeTime);
+        var user = svc.userService.user;
+        await svc.teeTimeService.bookTeeTime(teeTime, user);
       }));
     }
 
