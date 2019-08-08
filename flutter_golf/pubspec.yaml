@@ -15,9 +15,9 @@ dependencies:
   firebase_core: ^0.4.0+3
   cloud_firestore: ^0.12.1
   flutter_signin_button: ^0.2.8
-  rxdart: ^0.21.0
-  flutter_bloc: ^0.11.1
-  equatable: ^0.2.3
+#  rxdart: ^0.21.0
+#  flutter_bloc: ^0.11.1
+#  equatable: ^0.2.3
   intl: any
   provider: 3.0.0+1
   flutter_hooks: ^0.6.0

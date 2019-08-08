@@ -84,8 +84,8 @@ class TeeTimeService {
         endTime: finish,
         spacing: increment);
     times.forEach((teeTime) async {
-      print("Add teetime $teeTime");
-      var json = jsonSerializer.serialize(teeTime);
+      //print("Add teetime $teeTime");
+      var json = jsonSerializer.serializeWith(TeeTime.serializer, teeTime);
       print("Tee time json =$json");
       await _firestore.collection("teeTimes").add(json);
     });
@@ -114,7 +114,7 @@ class TeeTimeService {
       print("Creating booking");
       var r = await _firestore
           .collection("booking")
-          .add(jsonSerializer.serialize(booking));
+          .add(jsonSerializer.serializeWith(Booking.serializer, booking));
       var bid = r.documentID;
       print("booking created ${bid}");
 
@@ -127,10 +127,10 @@ class TeeTimeService {
   }
 
   Future<void> bookTeeTime(TeeTime teeTime, [int slots = 1]) async {
-//    print("Book time $teeTime slots=$slots");
-//    var u = await _firebaseAuth.currentUser();
+    print("Book time $teeTime slots=$slots");
+    var u = await _firebaseAuth.currentUser();
 //    var user = User.currentUser(u);
-//
+
 //    teeTime.availableSpots -= slots;
 //
 //    assert(teeTime.id != null);

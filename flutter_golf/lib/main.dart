@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_golf/splash_screen.dart';
 import 'package:flutter_golf/svc/services.dart';
-import 'util/simple_bloc_delegate.dart';
-import 'package:bloc/bloc.dart';
-import 'splash_screen.dart';
 import 'home_screen.dart';
 import 'pages/login_page.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_golf/svc/firestore_svc.dart';
 
 void main() {
-  BlocSupervisor().delegate = SimpleBlocDelegate();
   runApp(App());
 }
 
@@ -26,7 +23,7 @@ class App extends StatelessWidget {
             case Status.Uninitialized:
               return SplashScreen();
             case Status.Authenticated:
-              return HomeScreen(name: userRepo.user.email);
+              return HomeScreen(name: userRepo.firebaseUser.email);
             case Status.Unauthenticated:
             case Status.Authenticating:
             case Status.Error:

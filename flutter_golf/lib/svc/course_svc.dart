@@ -9,15 +9,11 @@ class CourseService {
   CourseService({Firestore firestore, FirebaseAuth auth})
       : _firestore = firestore ?? Firestore.instance;
 
-  // Gets the course list as a stream - watches for modifications.
+  // Gets the course list as a stream
+  // This should be a query scoped to what the user should see
+  // e.g. - favorities, or geo location within a region etc.
   Stream<List<Course>> getCoursesStream() {
     var ref = _firestore.collection("courses");
-//    return ref.snapshots().map(
-//        (list) => list.documents
-//        //.map((doc) => Course.fromJson(doc.data)..id = doc.documentID)
-//        ,
-//        map((doc) => jsonSerializer.deserialize(doc)).toList());
-
     return ref.snapshots().map((courseList) => courseList.documents.map(
         (snap) =>
             jsonSerializer.deserializeWith(Course.serializer, snap.data)));
@@ -51,6 +47,23 @@ class CourseService {
     await _firestore
         .collection("courses")
         .document(course.id)
-        .setData(jsonSerializer.serialize(course));
+        .setData(jsonSerializer.serializeWith(Course.serializer, course));
+  }
+
+  Future<Course> getCourseByName(String name) async {
+    var d = await _firestore
+        .collection("courses")
+        .where("name", isEqualTo: name)
+        .getDocuments();
+
+    // Doesnt look like the doc is there, or
+    if (d == null || d.documents == null) return null;
+
+    // todo: lame
+    if (d.documents.length != 1)
+      throw new Exception("Expecting only one course with name $name");
+
+    return jsonSerializer.deserializeWith(
+        Course.serializer, d.documents[0].data);
   }
 }

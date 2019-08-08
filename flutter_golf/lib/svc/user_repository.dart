@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/widgets.dart';
+import '../model/model.dart';
 
 enum Status {
   Uninitialized,
@@ -15,8 +16,9 @@ class UserRepository with ChangeNotifier {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
   final Firestore _firestore;
-  FirebaseUser _user;
+  FirebaseUser _firebase_user;
   Status _status = Status.Uninitialized;
+  User _user;
 
   UserRepository(
       {FirebaseAuth firebaseAuth,
@@ -29,7 +31,9 @@ class UserRepository with ChangeNotifier {
   }
 
   Status get status => _status;
-  FirebaseUser get user => _user;
+  FirebaseUser get firebaseUser => _firebase_user;
+
+  User get user => _user;
 
   Future<bool> signInWithGoogle() async {
     try {
@@ -78,12 +82,19 @@ class UserRepository with ChangeNotifier {
     _registerUser(user);
   }
 
-  Future<void> _registerUser(FirebaseUser user) async {
+  Future<void> _registerUser(FirebaseUser u) async {
     // add user to users doc
-    await _firestore
-        .collection("users")
-        .document(user.uid)
-        .setData({"email": user.email, "displayName": user.displayName});
+
+    var ref = _firestore.collection("users");
+    _user = _firebaseUserToModelUser(u);
+
+    try {
+      await ref
+          .document(_user.id)
+          .setData(jsonSerializer.serializeWith(User.serializer, _user));
+    } catch (e) {
+      print("Exception Serializing user $e");
+    }
   }
 
   Future<void> signOut() async {
@@ -108,9 +119,16 @@ class UserRepository with ChangeNotifier {
     if (firebaseUser == null) {
       _status = Status.Unauthenticated;
     } else {
-      _user = firebaseUser;
+      _firebase_user = firebaseUser;
       _status = Status.Authenticated;
+      // Create a Model User from the firebase user
+      _user = _firebaseUserToModelUser(_firebase_user);
     }
     notifyListeners();
   }
+
+  User _firebaseUserToModelUser(FirebaseUser fb) => User((u) => u
+    ..id = fb.uid
+    ..displayName = fb.displayName
+    ..email = fb.email);
 }

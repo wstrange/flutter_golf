@@ -31,15 +31,19 @@ class FireStore {
   }
 
   createSampleData() async {
-    // Generate a sample course;
-
-    var course = Course((c) => c..name = "Country Hills Talons");
-
     var now = DateTime.now();
     var t = DateTime(now.year, now.month, now.day, 7);
+    // Generate a sample course;
+
+    var name = "Country Hills Talons";
 
     try {
-      // await courseService.createCourse(course);
+      // If the course exists - dont recreate it.
+      var course = await courseService.getCourseByName(name);
+      if (course == null) {
+        course = Course((c) => c..name = name);
+        await courseService.createCourse(course);
+      }
 
       // delete tee time
       await deleteCollection("/teeTimes");
