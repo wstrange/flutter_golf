@@ -3,11 +3,10 @@
 // license that can be found in the LICENSE file.
 
 import 'package:built_collection/built_collection.dart';
-import 'package:built_value/json_object.dart';
 import 'package:built_value/serializer.dart';
 import 'package:built_value/standard_json_plugin.dart';
-import 'package:built_value/"
 import 'models.dart';
+import 'timestamp_serializer.dart';
 
 part 'serializers.g.dart';
 
@@ -26,6 +25,9 @@ part 'serializers.g.dart';
 final Serializers serializers = _$serializers;
 
 final jsonSerializer = (serializers.toBuilder()
+      //..add(GeoPointSerializer())
       ..addPlugin(StandardJsonPlugin())
-      //..addPlugin(Iso8601DateTimeSerializer))
-).build();
+    //..addPlugin(TimestampSerializerPlugin()) // firestore specific
+    //..addPlugin(Iso8601DateTimeSerializer))
+    )
+    .build();

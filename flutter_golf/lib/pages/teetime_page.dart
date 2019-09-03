@@ -21,7 +21,7 @@ class TeeTimePage extends HookWidget {
 
   Widget build(BuildContext context) {
     print("Build TeeTimePage");
-    var s = util.dateToTeeTime(teeTime.dateTime);
+    var dateTimeString = util.dateToTeeTime(teeTime.dateTime);
     svc = Provider.of<FireStore>(context, listen: false);
     final resStream =
         useMemoized(() => svc.teeTimeService.getBookingsForTeeTime(teeTime));
@@ -34,7 +34,7 @@ class TeeTimePage extends HookWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                "$s",
+                "$dateTimeString",
                 textAlign: TextAlign.center,
                 style: _style,
               ),
@@ -64,25 +64,12 @@ class TeeTimePage extends HookWidget {
     if (bookSnap.hasData) {
       // Iterate over each Booking
       bookSnap.data.forEach((b) {
-        // todo: Create a wrapper here for the booking. Each booking is
-        // independent.
-//        var bw = List<Widget>();
-//
-//        b.players.forEach((playerRef) {
-//          // todo: Need to lookup playerRef!!
-//          bw.add(_createCard(playerRef, onTap: () {
-//            print('Card tapped - player $playerRef}');
-//          }));
-//        });
-//
-//        var c = ListTile(leading: Icon(Icons.delete), title: Row(children: bw));
-//        // add
-
-        _t.add(BookingWidget(booking: b, teeTime: teeTime));
+        //_t.add(BookingWidget(booking: b, teeTime: teeTime));
+        _t.add(_bookingWidget(b, teeTime));
       });
     }
 
-    // Add "free Slots"
+    // Add available slots
     for (int i = 0; i < teeTime.availableSpots; ++i) {
       _t.add(_createCard("Available", onTap: () async {
         print('Available tapped.');
@@ -103,7 +90,7 @@ class TeeTimePage extends HookWidget {
       children: <Widget>[
         Center(
             child: Text(
-          "${teeTime.dateTime}",
+          "Created by: ${booking.createdByUser.displayName}",
           style: _style,
         )),
         ...players,
@@ -112,7 +99,13 @@ class TeeTimePage extends HookWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             RaisedButton(child: Text("Add Player")),
-            RaisedButton(child: Text("Cancel"))
+            RaisedButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                print("cancel booing ${booking.id}");
+                svc.teeTimeService.cancelBooking(teeTime, booking);
+              },
+            )
           ],
         )
       ],

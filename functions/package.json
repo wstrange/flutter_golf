@@ -12,7 +12,7 @@
   "engines": {
     "node": "8"
   },
-  "main": "lib/index.js",
+  "main": "build/node/index.dart.js",
   "dependencies": {
     "@google-cloud/firestore": "^2.2.4",
     "firebase-admin": "^8.2.0",

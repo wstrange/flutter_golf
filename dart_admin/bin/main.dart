@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:googleapis/firestore/v1.dart' as fs;
-import 'package:googleapis/firestore_admin/v1.dart';
 
 Future<void> main() async {
   final serviceAccountKeyFilename = '../service-accounts/service-account.json';
@@ -22,6 +21,4 @@ Future<void> main() async {
   fs.FirestoreApi api = fs.FirestoreApi(http_client);
 
   api.projects.databases.operations;
-
-
 }

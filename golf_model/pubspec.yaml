@@ -12,6 +12,7 @@ dependencies:
   built_value: ^6.7.0
   built_collection: '>=2.0.0 <5.0.0'
   uuid: 2.0.1
+  #cloud_firestore: ^0.12.1
 
 
 dev_dependencies:

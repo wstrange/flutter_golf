@@ -23,7 +23,7 @@ const db = admin.firestore();
 export const deleteBooking = functions.firestore.document('/booking/{bookingId}').onDelete( (doc,ctx) => {
     const booking = doc.data();
     const id = doc.id;
-    const teeTime = booking && booking.teeTimeRef || null;
+    const teeTime = booking && booking.teeTimeId || null;
 
     console.log(`context is ${ctx.params.bookingId} doc = ${booking} teeTimeRef=${teeTime}`);
 
@@ -32,19 +32,27 @@ export const deleteBooking = functions.firestore.document('/booking/{bookingId}'
     // get a reference to the teeTime
     const teeRef = db.collection("teeTimes").doc(teeTime);
 
-    // read the players array
+    // read the players map
     const p = booking && booking.players || null;
 
-    console.log(`Updating teeTime - removing ${p}`);
 
     // javascript objects are not the same as values.
     const players = Object.values(p);
 
+    console.log(`Updating teeTime - removing ${p}  players=${players}`);
 
-    // Update the tee time - removin
+    // players.keys().forEach( key => {
+    //     let path  =  `players/${key}`;
+    //     let r = teeRef.update({path: FieldValue.delete});
+    // });
+
+    // Update the tee time - removing
+
+
     const r = teeRef.update({
         bookingRefs: FieldValue.arrayRemove(id),
-        playerNames: FieldValue.arrayRemove(...players),
+        players: FieldValue.delete,
+        //playerNames: FieldValue.arrayRemove(...players),
         availableSpots: FieldValue.increment(players.length)
     });
 
@@ -54,9 +62,10 @@ export const deleteBooking = functions.firestore.document('/booking/{bookingId}'
 export const bookingWriteTrigger = functions.firestore.document('/booking/{bookingId}').onWrite( (change,context) => {
     // context.params.bookingId
     console.log(context)
+    console.log(change)
 
     const booking = change.after.data();
-    const bookingId = context.params.bookingId;
+    //const bookingId = context.params.bookingId;
 
     if (! booking)
         return false;
@@ -66,17 +75,17 @@ export const bookingWriteTrigger = functions.firestore.document('/booking/{booki
     const teeTimeRef = booking.teeTimeRef;
 
     if( ! teeTimeRef )
-    return false;
+        return false;
 
 
 
-    const teeTime = db.collection("teeTimes").doc(teeTimeRef);
+   //const teeTime = db.collection("teeTimes").doc(teeTimeRef);
 
-    teeTime.update({
-        bookingRefs: FieldValue.arrayUnion(bookingId),
-        playerNames: FieldValue.arrayRemove(...players),
-        availableSpots: FieldValue.increment(players.length)
-    });
+    // teeTime.update({
+    //     bookingRefs: FieldValue.arrayUnion(bookingId),
+    //     playerNames: FieldValue.arrayRemove(...players),
+    //     availableSpots: FieldValue.increment(players.length)
+    // });
 
 
     return true

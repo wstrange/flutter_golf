@@ -9,7 +9,7 @@ import 'dart:async';
 final _teeTimeTransformer =
     StreamTransformer<QuerySnapshot, List<TeeTime>>.fromHandlers(
         handleData: (snapshot, sink) {
-          snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
+          // snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
           var docSnaps = snapshot.documents;
           var teeTimes = docSnaps
               .map((DocumentSnapshot doc) =>
@@ -140,12 +140,28 @@ class TeeTimeService {
 
     await createBooking(booking);
 
+    // todo: Are we better off just reading / updating the entire doc..
+    // This has to run server side eventually..
     print("Updating teeTime id ${teeTime.id}");
-    await _firestore.collection("teeTimes").document(teeTime.id).updateData({
-      "bookingRefs": FieldValue.arrayUnion([booking.id])
-    });
 
-    // update the teeTime to reference the booking
+//    await _firestore.collection("teeTimes").document(teeTime.id).updateData({
+//      "bookingRefs": FieldValue.arrayUnion([booking.id],
+//       :  jsonSerializer.serializeWith(User.serializer, user)
+//    });
+
+    var teeRef = _firestore.collection("teeTimes").document(teeTime.id);
+    var doc = await teeRef.get();
+    var tt = jsonSerializer.deserializeWith(TeeTime.serializer, doc.data);
+
+    print("got teeTime $tt");
+    var nt = tt.rebuild((t) => t
+      ..bookingRefs.addAll([booking.id])
+      ..availableSpots = tt.availableSpots - 1
+      ..players.addAll({user.id: user}));
+
+    print("Updated time = $nt");
+
+    await teeRef.setData(jsonSerializer.serializeWith(TeeTime.serializer, nt));
   }
 
   findUserTeeTimes() async {
@@ -161,7 +177,7 @@ class TeeTimeService {
     assert(teeTime.id != null);
     var q = _firestore
         .collection("booking")
-        .where("teeTimeRef", isEqualTo: teeTime.id);
+        .where("teeTimeId", isEqualTo: teeTime.id);
 
     return q.snapshots().transform(_bookingTransformer);
   }
@@ -170,17 +186,28 @@ class TeeTimeService {
   // todo: This can be implemented partially by a trigger
   // so that the user cancelling does not need write access to the
   // teeTimes
-  Future<void> cancelBooking(TeeTime t, Booking b) async {
-    //var user = await _firebaseAuth.currentUser();
-    var players = b.players.values.toList();
-    //
+  Future<void> cancelBooking(TeeTime teeTime, Booking b) async {
+    // TODO: Move this to the server
+    // Create updates to the teeTime.
+    var updates = {
+      // remove the booing reference
+      "bookingRefs": FieldValue.arrayRemove([b.id]),
+      // the number of spots gets increased by the number of cancelled players
+      "availableSpots": teeTime.availableSpots + b.players.keys.length,
+    };
+
+    // The cancelled players are removed from the teeTime players map
+    b.players.keys.forEach(
+        (playerId) => updates["players.$playerId"] = FieldValue.delete());
+
     try {
       // first remove the booking from the tee times
+
       // todo: Make this a trigger
-//      await _firestore.collection("teeTimes").document(t.id).updateData({
-//        "bookingRefs": FieldValue.arrayRemove([b.id]),
-//        "playerNames": FieldValue.arrayRemove(players)
-//      });
+      await _firestore
+          .collection("teeTimes")
+          .document(b.teeTimeId)
+          .updateData(updates);
       // now delete the booking
       await _firestore.collection("booking").document(b.id).delete();
       print("Canceled booking ${b.id}");

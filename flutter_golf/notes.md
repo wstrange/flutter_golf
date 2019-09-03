@@ -54,6 +54,32 @@ guest2 { bookedBy:  wilma name: "Betty Rubble" }
 
 
 
+dart to firestore cloud functions
+
+Problem: Cloud Firestore has a unique datatype (TimeStamp). This library
+is not compatible between flutter and the javascript/nodejs library. 
+Can't deserialize...
+
+
+Protobuf3 - json serialization is almost here:
+https://github.com/dart-lang/protobuf/issues/220
+https://github.com/dart-lang/protobuf/pull/274
+
+Using proto3 + json - should be able to serialize for firestore api.
+https://github.com/googleapis/nodejs-firestore/blob/master/dev/src/convert.ts
+
+cloud run - does not support grpc /websocket
+
+
+
 
 When we create a tee time we should add the course name to the record
 OR - cache the course name lookup.
+
+
+Libs
+----
+https://github.com/kdy1/typed_firestore - adds type to Built value
+https://pub.dev/packages/firedart - native gRPC firestore api
+
+
