@@ -28,6 +28,9 @@ class TeeSheetPage extends HookWidget {
         [course.id, selectedDate.value]);
     var teeTimeSnap = useStream(stream);
 
+    var hasData = teeTimeSnap.hasData && teeTimeSnap.data.length > 0;
+    var teeData = teeTimeSnap.data;
+
     return SafeArea(
         child: Scaffold(
             appBar: AppBar(title: Text(course.name)),
@@ -35,12 +38,17 @@ class TeeSheetPage extends HookWidget {
               children: <Widget>[
                 _dateTab(selectedDate),
                 Expanded(
-                    child: _CreateTeeSheet(snap: teeTimeSnap, course: course)),
+                    child: hasData
+                        ? ListView.builder(
+                            itemCount: teeData.length,
+                            itemBuilder: (context, position) => _TeeTimeSlot(
+                                teeTime: teeData[position], course: course))
+                        : Text("Tee Sheet not available for this day!"))
               ],
             )));
   }
 
-  // Render the top tab that lets the user update the course date
+  // Render the top tab that lets the user navigate the course date
   Widget _dateTab(ValueNotifier<DateTime> selectedDate) {
     var s = util.dateToDay(selectedDate.value);
     return Row(
@@ -64,28 +72,6 @@ class TeeSheetPage extends HookWidget {
         ),
       ],
     );
-  }
-}
-
-// todo: This can prolly be a statelesswidget... or just a method
-class _CreateTeeSheet extends HookWidget {
-  final AsyncSnapshot<List<TeeTime>> snap;
-  final Course course;
-
-  _CreateTeeSheet({Key key, this.snap, this.course}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    if (!snap.hasData || snap.data.length == 0) {
-      return Text("Tee Sheet not available for this day!");
-    }
-
-    var times = snap.data;
-    return ListView.builder(
-        itemCount: times.length,
-        itemBuilder: (context, position) {
-          return _TeeTimeSlot(teeTime: times[position], course: course);
-        });
   }
 }
 

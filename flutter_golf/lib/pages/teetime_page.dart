@@ -33,11 +33,19 @@ class TeeTimePage extends HookWidget {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Text(
-                "$dateTimeString",
-                textAlign: TextAlign.center,
-                style: _style,
+              Center(
+                child: Text(
+                  "$dateTimeString",
+                  textAlign: TextAlign.center,
+                  style: _style,
+                ),
               ),
+              if (teeTime.availableSpots > 0)
+                Text(
+                  "Available Spots: ${teeTime.availableSpots}",
+                  textAlign: TextAlign.end,
+                  style: _style,
+                ),
               SizedBox(
                 height: 50.0,
               ),
@@ -69,46 +77,53 @@ class TeeTimePage extends HookWidget {
       });
     }
 
-    // Add available slots
-    for (int i = 0; i < teeTime.availableSpots; ++i) {
-      _t.add(_createCard("Available", onTap: () async {
-        print('Available tapped.');
-        var user = svc.userService.user;
-        await svc.teeTimeService.bookTeeTime(teeTime, user);
-      }));
-    }
-
     return _t;
   }
 
   // Create the widget that displays a single booking
   Widget _bookingWidget(Booking booking, TeeTime teeTime) {
     var players = booking.players.keys.map((playerId) {
-      return Text("$playerId");
+      var name = booking.players[playerId].displayName;
+      return Text("${name}");
     });
-    return Column(
-      children: <Widget>[
-        Center(
-            child: Text(
-          "Created by: ${booking.createdByUser.displayName}",
-          style: _style,
-        )),
-        ...players,
-        Row(
-          //crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: <Widget>[
-            RaisedButton(child: Text("Add Player")),
-            RaisedButton(
-              child: Text("Cancel"),
-              onPressed: () {
-                print("cancel booing ${booking.id}");
-                svc.teeTimeService.cancelBooking(teeTime, booking);
-              },
-            )
-          ],
-        )
-      ],
+    return Card(
+      elevation: 2.0,
+      margin: EdgeInsets.all(15.0),
+      color: Colors.amberAccent,
+      child: Column(
+        children: <Widget>[
+          Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  "Booked by: ${booking.createdByUser.displayName}",
+                  style: _style,
+                  textScaleFactor: 0.75,
+                ),
+              )),
+          Text("Players"),
+          ...players,
+          Row(
+            //crossAxisAlignment: CrossAxisAlignment.center,
+
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: <Widget>[
+              RaisedButton(
+                child: Text("Add Player"),
+                onPressed: () => print("todo - add player"),
+              ),
+              RaisedButton(
+                child: Text("Cancel"),
+                onPressed: () {
+                  print("cancel booing ${booking.id}");
+                  svc.teeTimeService.cancelBooking(teeTime, booking);
+                },
+              )
+            ],
+          )
+        ],
+      ),
     );
   }
 

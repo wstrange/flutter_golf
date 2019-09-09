@@ -1,4 +1,4 @@
-package com.my2do.fluttergolf;
+package com.my2do.flutter_golf;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;

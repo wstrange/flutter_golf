@@ -46,8 +46,8 @@ class UserService with ChangeNotifier {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      var user = await _firebaseAuth.signInWithCredential(credential);
-      _registerUser(user);
+      var authResult = await _firebaseAuth.signInWithCredential(credential);
+      _registerUser(authResult.user);
       return true;
     } catch (e) {
       print(e);
@@ -75,11 +75,13 @@ class UserService with ChangeNotifier {
   }
 
   Future<void> signUp({String email, String password}) async {
-    var user = await _firebaseAuth.createUserWithEmailAndPassword(
+    var authResult = await _firebaseAuth.createUserWithEmailAndPassword(
       email: email,
       password: password,
     );
-    _registerUser(user);
+    print(
+        "Sign up user ${authResult.user} additional info ${authResult.additionalUserInfo}");
+    _registerUser(authResult.user);
   }
 
   Future<void> _registerUser(FirebaseUser u) async {
