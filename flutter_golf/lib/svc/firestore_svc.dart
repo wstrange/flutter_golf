@@ -9,7 +9,6 @@ import '../model/model.dart';
 // Firestore services
 class FireStore {
   final Firestore _firestore;
-  final FirebaseAuth _auth;
   final TeeTimeService teeTimeService;
   final ProfileService profileService;
   final CourseService courseService;
@@ -17,7 +16,6 @@ class FireStore {
 
   FireStore({Firestore firestore, FirebaseAuth auth})
       : _firestore = firestore ?? Firestore.instance,
-        _auth = auth ?? FirebaseAuth.instance,
         teeTimeService = TeeTimeService(firestore: firestore, auth: auth),
         profileService = ProfileService(firestore: firestore, auth: auth),
         userService = UserService(firebaseAuth: auth, firestore: firestore),
@@ -52,9 +50,6 @@ class FireStore {
       await deleteCollection("/teeTimes");
 
       await teeTimeService.genTeeTimes(course, start: t);
-
-      // get the first teeTime
-      await teeTimeService.getTeeTimes(course, t);
     } catch (e) {
       print("Exception creating sample data $e");
       rethrow;

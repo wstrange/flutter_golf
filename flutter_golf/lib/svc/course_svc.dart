@@ -32,6 +32,7 @@ class CourseService {
     } catch (e) {
       print("Exception getting courses $e");
     }
+    return [];
   }
 
   // Todo: What if course does not exist?

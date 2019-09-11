@@ -16,7 +16,7 @@ class UserService with ChangeNotifier {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
   final Firestore _firestore;
-  FirebaseUser _firebase_user;
+  FirebaseUser _firebaseUser;
   Status _status = Status.Uninitialized;
   User _user;
 
@@ -31,7 +31,7 @@ class UserService with ChangeNotifier {
   }
 
   Status get status => _status;
-  FirebaseUser get firebaseUser => _firebase_user;
+  FirebaseUser get firebaseUser => _firebaseUser;
 
   User get user => _user;
 
@@ -121,10 +121,10 @@ class UserService with ChangeNotifier {
     if (firebaseUser == null) {
       _status = Status.Unauthenticated;
     } else {
-      _firebase_user = firebaseUser;
+      _firebaseUser = firebaseUser;
       _status = Status.Authenticated;
       // Create a Model User from the firebase user
-      _user = _firebaseUserToModelUser(_firebase_user);
+      _user = _firebaseUserToModelUser(_firebaseUser);
     }
     notifyListeners();
   }

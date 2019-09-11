@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../model/model.dart';
-import '../util/date_format.dart' as util;
 import 'dart:async';
 
 // Converts a stream of firestore doc snapshots to a list
@@ -50,7 +49,6 @@ class TeeTimeService {
 
   Stream<List<TeeTime>> getTeeTimeStream(String courseId, DateTime date) {
     var ref = _firestore.collection("teeTimes");
-    var d = util.dateToYearMonthDay(date);
     var start = DateTime(date.year, date.month, date.day, 0, 1);
     var end = DateTime(date.year, date.month, date.day, 23, 59);
 
@@ -76,7 +74,6 @@ class TeeTimeService {
 
     if (start == null) start = DateTime.now();
     if (finish == null) finish = start.add(Duration(hours: 8));
-    var time = start.add(Duration(seconds: 0));
 
     var times = TeeTime.generateTeeTimes(
         courseId: course.id,
@@ -115,7 +112,7 @@ class TeeTimeService {
   Future<void> createBooking(Booking booking) async {
     try {
       print("Creating booking");
-      var r = await _firestore
+      await _firestore
           .collection("booking")
           .document(booking.id)
           .setData(jsonSerializer.serializeWith(Booking.serializer, booking));
@@ -214,17 +211,5 @@ class TeeTimeService {
     } catch (e) {
       print("Exception $e");
     }
-  }
-
-  // Return a list of teeTimes for a course on this date
-  Future<List<TeeTime>> getTeeTimes(Course course, DateTime t) {
-    // hack. ToDo store a real date/Time
-    var s = t.toIso8601String().substring(0, 9);
-    _firestore
-        .collection("/teeTimes")
-        .where("courseId", isEqualTo: course.id)
-        // todo: filter on date
-        //.where("dateTime", startsWith(s))
-        .getDocuments();
   }
 }

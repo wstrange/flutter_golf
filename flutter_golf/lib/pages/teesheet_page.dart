@@ -10,12 +10,9 @@ final _textStyle = const TextStyle(fontWeight: FontWeight.bold, fontSize: 16);
 
 class TeeSheetPage extends HookWidget {
   final Course course;
-  DateTime date;
+  final DateTime date;
 
   TeeSheetPage({this.course, this.date});
-
-  TeeTimeService svc;
-  Stream<List<TeeTime>> teeTimeStream;
 
   Widget build(BuildContext context) {
     var svc = Provider.of<FireStore>(context, listen: false).teeTimeService;
@@ -117,7 +114,7 @@ class _TeeTimeSlot extends StatelessWidget {
   }
 
   // available widget
-  Widget _available = Card(
+  final Widget _available = Card(
       child: Padding(
         padding: const EdgeInsets.all(6.0),
         child: Text(
@@ -135,10 +132,6 @@ class _TeeTimeSlot extends StatelessWidget {
           child: Text(name, style: _textStyle)));
 
   Widget _createPlayerRows() {
-    int numPlayers = teeTime.players.length;
-    int total = teeTime.availableSpots + numPlayers;
-    int numRows = total ~/ 2;
-
     List<Widget> _t = [];
     teeTime.players.forEach((id, user) {
       _t.add(_playerText(user.displayName));

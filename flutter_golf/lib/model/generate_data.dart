@@ -8,7 +8,7 @@ import 'package:uuid/uuid.dart';
 
 var uuid = Uuid();
 
-generate_data(int numUsers, int numCourses) {
+void generateData(int numUsers, int numCourses) {
   var users = List<User>();
 
   // add some users

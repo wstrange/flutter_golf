@@ -8,4 +8,9 @@ class ProfileService {
   // the context of a current user.
   ProfileService({Firestore firestore, FirebaseAuth auth})
       : _firestore = firestore ?? Firestore.instance;
+
+  todo() {
+    // update the users profile...
+    _firestore.document("/user");
+  }
 }
