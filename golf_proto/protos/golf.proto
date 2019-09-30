@@ -7,14 +7,17 @@ import "google/protobuf/timestamp.proto";
 //import google_protobuf "github.com/golang/protobuf/ptypes/timestamp";
 
 
-//
-//service BookTeeTime {
-//    rpc GetTeeTimes(int64) returns (TeeTime);
-//}
+service BookTeeTime {
+    rpc GetTeeTimes (BookTeeTimeRequest) returns (TeeTime) {}
+}
+
+message BookTeeTimeRequest {
+    string note = 1;
+}
 
 message TeeTime {
     string notes = 1;
-    int32 numberPlayers =2;
+    int32 numberPlayers = 2;
     google.protobuf.Timestamp timeStamp = 3;
 }
 

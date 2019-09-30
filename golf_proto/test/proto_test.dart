@@ -13,12 +13,19 @@ main() {
 
     var m = teeTime.writeToJsonMap();
     var s = teeTime.writeToJson();
+    var json = teeTime.toProto3Json();
 
     print("Json map = $m\n json string = $s");
+    print("To json = $json");
 
     var otherTeeTime = TeeTime.fromJson(s);
 
+    var teeTime3 = TeeTime();
+    teeTime3.mergeFromProto3Json(json);
+    print("Teetime 3 = $teeTime3");
+
     expect(otherTeeTime, equals(teeTime));
+    expect(teeTime3, equals(teeTime));
 
     // make the instance immutable
     otherTeeTime.freeze();

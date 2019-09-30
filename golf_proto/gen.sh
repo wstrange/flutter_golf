@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# pub global activate protoc_plugin
+
 PROTO_DIR=/usr/local/opt/protobuf/include
 
 rm -fr lib/protos

@@ -7,8 +7,8 @@ environment:
 
 dependencies:
   async: ^2.2.0
-  grpc: ^2.1.1
-  protobuf: ^0.13.15
+  grpc: ^2.1.2
+  protobuf: ^0.14.4
 
 dev_dependencies:
   test: any

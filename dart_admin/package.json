@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "firebase-admin": "8.6.0",
+    "@google-cloud/firestore": "2.3.0"
+  }
+}

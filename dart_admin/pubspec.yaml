@@ -8,10 +8,12 @@ environment:
   sdk: '>=2.1.0 <3.0.0'
 
 dependencies:
-  #firebase_admin_interop: ^1.2.1
-  googleapis: ^0.52.0+1
-  googleapis_auth: any
+  firebase_admin_interop: ^2.0.0
+
 
 dev_dependencies:
+  build_runner: ^1.0.0
+  build_node_compilers: ^0.2.0
   test: ^1.0.0
   pedantic: any
+  build_test:

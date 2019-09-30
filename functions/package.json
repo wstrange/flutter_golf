@@ -14,15 +14,13 @@
   },
   "main": "build/node/index.dart.js",
   "dependencies": {
-    "@google-cloud/firestore": "^2.2.4",
-    "firebase-admin": "^8.2.0",
-    "firebase-functions": "^3.1.0"
+    "firebase-admin": "8.6.0",
+    "@google-cloud/firestore": "^2.3.0",
+    "firebase-functions": "^3.2.0"
   },
   "devDependencies": {
-    "firebase-admin": "^8.2.0",
-    "firebase-functions": "^3.1.0",
-    "tslint": "^5.18.0",
-    "typescript": "^3.5.3"
+    "tslint": "^5.20.0",
+    "typescript": "^3.6.3"
   },
   "private": true
 }
