@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_golf/mobx/mobx.dart';
+import 'package:flutter_golf/mobx/user_store.dart';
 import 'package:provider/provider.dart';
 import '../model/model.dart';
 import '../svc/services.dart';
 import '../util/date_format.dart' as util;
+import 'package:flutter_mobx/flutter_mobx.dart';
 
 // Widget to book a tee time on the course at the given date and time
 
@@ -12,7 +14,7 @@ const TextStyle _style = TextStyle(
   fontWeight: FontWeight.bold,
 );
 
-class TeeTimePage extends HookWidget {
+class TeeTimePage extends StatelessWidget {
   final TeeTime teeTime;
   final Course course;
 
@@ -22,66 +24,61 @@ class TeeTimePage extends HookWidget {
     print("Build TeeTimePage");
     var dateTimeString = util.dateToTeeTime(teeTime.dateTime);
     var svc = Provider.of<FireStore>(context, listen: false);
-    final resStream =
-        useMemoized(() => svc.teeTimeService.getBookingsForTeeTime(teeTime));
-    final bookings = useStream(resStream);
+    var userStore = Provider.of<UserStore>(context);
+    var teeTimeStore = Provider.of<TeeTimeStore>(context, listen: false);
+
+    // todo: This is async - so view may not be ready.
+    teeTimeStore.getTeeTime(teeTime.id);
 
     return SafeArea(
       child: Scaffold(
           appBar: AppBar(title: Text("${course.name}")),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Center(
-                child: Text(
-                  "$dateTimeString",
-                  textAlign: TextAlign.center,
-                  style: _style,
-                ),
-              ),
-              if (teeTime.availableSpots > 0)
-                Text(
-                  "Available Spots: ${teeTime.availableSpots}",
-                  textAlign: TextAlign.end,
-                  style: _style,
-                ),
-              SizedBox(
-                height: 50.0,
-              ),
-              ..._drawSlots(bookings, svc.teeTimeService),
-              SizedBox(
-                height: 10.0,
-              ),
-              RaisedButton(
-                  child: Text("Create New Booking"),
-                  onPressed: () async {
-                    var user = svc.userService.user;
-                    await svc.teeTimeService.bookTeeTime(teeTime, user);
-                    Navigator.pop(context);
-                  }),
-            ],
-          )),
+          body: Observer(
+              builder: (_) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Center(
+                        child: Text(
+                          "$dateTimeString",
+                          textAlign: TextAlign.center,
+                          style: _style,
+                        ),
+                      ),
+                      if (teeTimeStore.teeTime.availableSpots > 0)
+                        Text(
+                          "Available Spots: ${teeTimeStore.teeTime.availableSpots}",
+                          textAlign: TextAlign.end,
+                          style: _style,
+                        ),
+                      SizedBox(
+                        height: 50.0,
+                      ),
+                      ..._drawSlots(teeTimeStore.teeTimeBookingsList,
+                          teeTimeStore.teeTime),
+                      SizedBox(
+                        height: 10.0,
+                      ),
+                      RaisedButton(
+                          child: Text("Create New Booking"),
+                          onPressed: () async {
+                            await teeTimeStore.createBooking(userStore.user);
+                            Navigator.pop(context);
+                          }),
+                    ],
+                  ))),
     );
   }
 
   // Draw the list of players in each slot, or "available" if
   // the slot is open
-  List<Widget> _drawSlots(
-      AsyncSnapshot<List<Booking>> bookSnap, TeeTimeService teeTimeSvc) {
-    List<Widget> _t = [];
-    if (bookSnap.hasData) {
-      // Iterate over each Booking
-      bookSnap.data.forEach((b) {
-        //_t.add(BookingWidget(booking: b, teeTime: teeTime));
-        _t.add(_bookingWidget(b, teeTime, teeTimeSvc));
-      });
-    }
-
-    return _t;
+  List<Widget> _drawSlots(List<Booking> bookings, TeeTime teeTime) {
+    return bookings
+        .map((b) => _bookingWidget(b, teeTime))
+        .toList(growable: false);
   }
 
   // Create the widget that displays a single booking
-  Widget _bookingWidget(Booking booking, TeeTime teeTime, TeeTimeService svc) {
+  Widget _bookingWidget(Booking booking, TeeTime teeTime) {
     var players = booking.players.keys.map((playerId) {
       var name = booking.players[playerId].displayName;
       return Text("$name");
@@ -117,7 +114,8 @@ class TeeTimePage extends HookWidget {
                 child: Text("Cancel"),
                 onPressed: () {
                   print("cancel booing ${booking.id}");
-                  svc.cancelBooking(teeTime, booking);
+                  // todo: fix passing booking store. Make this stateful???
+                  // Provider.of<TeeTimeService>().cancelBooking(teeTime, booking);
                 },
               )
             ],

@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../model/model.dart';
 import 'dart:async';
 
+import 'service_exception.dart';
+
 // Converts a stream of firestore doc snapshots to a list
 // of TeeTimes
 final _teeTimeTransformer =
@@ -40,15 +42,15 @@ final _bookingTransformer =
 class TeeTimeService {
   final Firestore _firestore;
   final FirebaseAuth _firebaseAuth;
-  //final FirebaseUser _user;
-  // Create the teeTime service. This is always done in the
-  // the context of a current user.
+  CollectionReference _teeTimeRef;
+
   TeeTimeService({Firestore firestore, FirebaseAuth auth})
       : _firestore = firestore ?? Firestore.instance,
-        _firebaseAuth = auth ?? FirebaseAuth.instance;
+        _firebaseAuth = auth ?? FirebaseAuth.instance {
+    _teeTimeRef = _firestore.collection("teeTimes");
+  }
 
   Stream<List<TeeTime>> getTeeTimeStream(String courseId, DateTime date) {
-    var ref = _firestore.collection("teeTimes");
     var start = DateTime(date.year, date.month, date.day, 0, 1);
     var end = DateTime(date.year, date.month, date.day, 23, 59);
 
@@ -56,7 +58,7 @@ class TeeTimeService {
     var te = Timestamp.fromDate(end);
 
     print("Get Stream for List of Tee Times courseId = $courseId, For $date");
-    var q = ref
+    var q = _teeTimeRef
         .where("courseId", isEqualTo: courseId)
         .where("dateTime", isGreaterThanOrEqualTo: ts)
         .where("dateTime", isLessThanOrEqualTo: te)
@@ -64,6 +66,51 @@ class TeeTimeService {
 
     return q.snapshots().transform(_teeTimeTransformer);
   }
+//
+//  Future<List<TeeTime>> _getTeeTimeList(String courseId, DateTime date) async {
+//    var start = DateTime(date.year, date.month, date.day, 0, 1);
+//    var end = DateTime(date.year, date.month, date.day, 23, 59);
+//
+//    var ts = Timestamp.fromDate(start);
+//    var te = Timestamp.fromDate(end);
+//
+//    print("Get List of Tee Times courseId = $courseId, For $date");
+//    var q = _teeTimeRef
+//        .where("courseId", isEqualTo: courseId)
+//        .where("dateTime", isGreaterThanOrEqualTo: ts)
+//        .where("dateTime", isLessThanOrEqualTo: te)
+//        .orderBy("dateTime");
+//    var d = await q.getDocuments();
+//
+//    var docList = d.documents.map((doc) => _deserialize(doc)).toList();
+//
+//    return docList;
+//  }
+
+  Future<TeeTime> getTeeTime({Course course, DateTime date}) async {
+    var ts = Timestamp.fromDate(date);
+
+    var q = _teeTimeRef
+        .where("courseId", isEqualTo: course.id)
+        .where("dateTime", isEqualTo: ts);
+    var doc = await q.getDocuments();
+
+    // todo.. error check here..
+    if (doc.documents.length != 1) {
+      return null; // this is bogus..
+    }
+    return _deserialize(doc.documents.first);
+  }
+
+  Future<TeeTime> getTeeTimeById(String id) async {
+    var doc = await _teeTimeRef.document(id).get();
+    // todo: fix
+    if (doc == null || doc.data.isEmpty) return null;
+    return _deserialize(doc);
+  }
+
+  TeeTime _deserialize(DocumentSnapshot doc) =>
+      jsonSerializer.deserializeWith(TeeTime.serializer, doc.data);
 
   // Generate a list of empty tee times.
   Future<void> genTeeTimes(Course course,
@@ -169,7 +216,7 @@ class TeeTimeService {
   }
 
   // Return a stream of Bookings linked to this tee time
-  Stream<List<Booking>> getBookingsForTeeTime(TeeTime teeTime) {
+  Stream<List<Booking>> getBookingsStreamForTeeTime(TeeTime teeTime) {
     print("Get stream bookings for ${teeTime.id}");
     assert(teeTime.id != null);
     var q = _firestore
@@ -177,6 +224,22 @@ class TeeTimeService {
         .where("teeTimeId", isEqualTo: teeTime.id);
 
     return q.snapshots().transform(_bookingTransformer);
+  }
+
+  // Return a list of bookings for this tee time
+  Future<List<Booking>> getBookingsForTeeTime(TeeTime teeTime) async {
+    print("Get bookings for ${teeTime.id}");
+    assert(teeTime.id != null);
+    var q = _firestore
+        .collection("booking")
+        .where("teeTimeId", isEqualTo: teeTime.id);
+
+    var docs = await q.getDocuments();
+
+    return docs.documents
+        .map((doc) =>
+            jsonSerializer.deserializeWith(Booking.serializer, doc.data))
+        .toList(growable: false);
   }
 
   // Cancel the entire booking
@@ -211,5 +274,57 @@ class TeeTimeService {
     } catch (e) {
       print("Exception $e");
     }
+  }
+
+  StreamSubscription<QuerySnapshot> _docSnaps;
+
+  // Listen to updates for course on the given date
+  // Update the list provided by adding, removing, or updating items
+  // TODO: This could be smarter aboout caching the stream and
+  // not causing firebase to reread the doc. Stay subscribed
+  // appears as if FB is smart enough to not reread??
+  void subscribeTeeTimeListUpdates(
+      String courseId, DateTime date, List<TeeTime> list) {
+    var start = DateTime(date.year, date.month, date.day, 0, 1);
+    var end = DateTime(date.year, date.month, date.day, 23, 59);
+
+    var ts = Timestamp.fromDate(start);
+    var te = Timestamp.fromDate(end);
+    // todo: check for the date / course being the same.
+    // query does not implement equals, so we can't compare it.
+
+    print("Subscribe to Tee Times for courseId = $courseId, For $date");
+    var q = _teeTimeRef
+        .where("courseId", isEqualTo: courseId)
+        .where("dateTime", isGreaterThanOrEqualTo: ts)
+        .where("dateTime", isLessThanOrEqualTo: te)
+        .orderBy("dateTime");
+
+    if (_docSnaps != null) {
+      print("Cancelling previous stream");
+      _docSnaps.cancel();
+      list.clear();
+    }
+
+    _docSnaps = q.snapshots().listen((snapshot) {
+      snapshot.documentChanges.forEach((docChange) {
+        var t = _deserialize(docChange.document);
+        switch (docChange.type) {
+          case DocumentChangeType.added:
+            list.add(t);
+            break;
+          case DocumentChangeType.removed:
+            list.remove(t);
+            break;
+          case DocumentChangeType.modified:
+            print("Document modified $t  ${docChange}");
+            int i = list.indexWhere((l) => l.id == t.id);
+            if (i == -1) {
+              throw ServiceException("List did not contain document");
+            }
+            list[i] = t;
+        }
+      });
+    });
   }
 }

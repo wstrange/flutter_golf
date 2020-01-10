@@ -83,3 +83,31 @@ https://github.com/kdy1/typed_firestore - adds type to Built value
 https://pub.dev/packages/firedart - native gRPC firestore api
 
 
+
+# State Management
+
+State mananegement 
+
+BloC
+pros - good support. Clean one way flow. Testable. Record event stream (for time travel, etc.)
+cons - a lot of boilerplate. awkward to make everything an event stream??
+firestore support?
+very active development 
+
+
+MobX - 
+Create backing store / form. Create actions / re-actions
+Probably should not use mobx store as the domain model - so some code duplication
+active community
+
+
+Hooks -
+good for local state of ui - hook is close to where it is used 
+complex lifecycle if you dont follow the rules.. 
+
+
+
+Todo:
+- booking does not allow choice / cancel
+- user store is sometimes not set - need to force user to log in when app starts.
+- tee sheet does not refresh on back navigation

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_golf/svc/services.dart';
 import 'package:provider/provider.dart';
+import 'mobx/user_store.dart';
 import 'widgets/course_selector.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -10,7 +11,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var svc = Provider.of<FireStore>(context, listen: false);
+    var userRepo = Provider.of<UserStore>(context);
+    var svc = Provider.of<FireStore>(context);
 
     return Scaffold(
         appBar: AppBar(
@@ -19,7 +21,6 @@ class HomeScreen extends StatelessWidget {
             IconButton(
                 icon: Icon(Icons.exit_to_app),
                 onPressed: () {
-                  var userRepo = Provider.of<UserService>(context);
                   userRepo.signOut();
                 })
           ],

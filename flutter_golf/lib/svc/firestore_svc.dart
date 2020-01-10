@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import "teetimes_svc.dart";
 import "profile_svc.dart";
 import "course_svc.dart";
-import 'user_svc.dart';
 import '../model/model.dart';
 
 // Firestore services
@@ -12,13 +11,11 @@ class FireStore {
   final TeeTimeService teeTimeService;
   final ProfileService profileService;
   final CourseService courseService;
-  final UserService userService;
 
   FireStore({Firestore firestore, FirebaseAuth auth})
       : _firestore = firestore ?? Firestore.instance,
         teeTimeService = TeeTimeService(firestore: firestore, auth: auth),
         profileService = ProfileService(firestore: firestore, auth: auth),
-        userService = UserService(firebaseAuth: auth, firestore: firestore),
         courseService = CourseService(firestore: firestore, auth: auth);
 
   // This is not correct  / complete..

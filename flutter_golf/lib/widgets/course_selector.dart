@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../model/model.dart';
-import 'package:flutter_golf/pages/teesheet_page.dart';
+import 'package:flutter_golf/pages/tee_sheet_page.dart';
 import 'package:flutter_golf/svc/firestore_svc.dart';
 import 'package:provider/provider.dart';
 
@@ -21,7 +21,7 @@ class CourseSelector extends StatelessWidget {
   }
 
   List<Widget> _build(BuildContext context, List<Course> courses) {
-    print("Building course widget = $courses");
+    //print("Building course widget = $courses");
     return courses
         .map((course) => Card(
             child: ListTile(
