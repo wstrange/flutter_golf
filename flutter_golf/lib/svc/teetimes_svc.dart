@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:logging/logging.dart';
 import '../model/model.dart';
 import 'dart:async';
 
 import 'service_exception.dart';
+
+final Logger log = new Logger('TeeTimeService');
 
 // Converts a stream of firestore doc snapshots to a list
 // of TeeTimes
@@ -57,7 +60,8 @@ class TeeTimeService {
     var ts = Timestamp.fromDate(start);
     var te = Timestamp.fromDate(end);
 
-    print("Get Stream for List of Tee Times courseId = $courseId, For $date");
+    log.fine(
+        "Get Stream for List of Tee Times courseId = $courseId, For $date");
     var q = _teeTimeRef
         .where("courseId", isEqualTo: courseId)
         .where("dateTime", isGreaterThanOrEqualTo: ts)
@@ -74,7 +78,7 @@ class TeeTimeService {
 //    var ts = Timestamp.fromDate(start);
 //    var te = Timestamp.fromDate(end);
 //
-//    print("Get List of Tee Times courseId = $courseId, For $date");
+//    log.fine("Get List of Tee Times courseId = $courseId, For $date");
 //    var q = _teeTimeRef
 //        .where("courseId", isEqualTo: courseId)
 //        .where("dateTime", isGreaterThanOrEqualTo: ts)
@@ -128,9 +132,9 @@ class TeeTimeService {
         endTime: finish,
         spacing: increment);
     times.forEach((teeTime) async {
-      //print("Add teetime $teeTime");
+      //log.fine("Add teetime $teeTime");
       var json = jsonSerializer.serializeWith(TeeTime.serializer, teeTime);
-      print("Tee time json =$json");
+      log.fine("Tee time json =$json");
       await _firestore
           .collection("teeTimes")
           .document(teeTime.id)
@@ -158,22 +162,22 @@ class TeeTimeService {
   // Create a booking.
   Future<void> createBooking(Booking booking) async {
     try {
-      print("Creating booking");
+      log.fine("Creating booking");
       await _firestore
           .collection("booking")
           .document(booking.id)
           .setData(jsonSerializer.serializeWith(Booking.serializer, booking));
-      print("booking created ${booking.id}");
+      log.fine("booking created ${booking.id}");
       // todo update the tee time
 
     } catch (e) {
-      print("Exception creating booking $e");
+      log.fine("Exception creating booking $e");
       throw e;
     }
   }
 
   Future<void> bookTeeTime(TeeTime teeTime, User user, [int slots = 1]) async {
-    print("Book time $teeTime slots=$slots  user=$user");
+    log.fine("Book time $teeTime slots=$slots  user=$user");
 
     var booking = Booking((b) => b
       ..players.addAll({user.id: user})
@@ -186,7 +190,7 @@ class TeeTimeService {
 
     // todo: Are we better off just reading / updating the entire doc..
     // This has to run server side eventually..
-    print("Updating teeTime id ${teeTime.id}");
+    log.fine("Updating teeTime id ${teeTime.id}");
 
 //    await _firestore.collection("teeTimes").document(teeTime.id).updateData({
 //      "bookingRefs": FieldValue.arrayUnion([booking.id],
@@ -197,13 +201,13 @@ class TeeTimeService {
     var doc = await teeRef.get();
     var tt = jsonSerializer.deserializeWith(TeeTime.serializer, doc.data);
 
-    print("got teeTime $tt");
+    log.fine("got teeTime $tt");
     var nt = tt.rebuild((t) => t
       ..bookingRefs.addAll([booking.id])
       ..availableSpots = tt.availableSpots - 1
       ..players.addAll({user.id: user}));
 
-    print("Updated time = $nt");
+    log.fine("Updated time = $nt");
 
     await teeRef.setData(jsonSerializer.serializeWith(TeeTime.serializer, nt));
   }
@@ -217,7 +221,7 @@ class TeeTimeService {
 
   // Return a stream of Bookings linked to this tee time
   Stream<List<Booking>> getBookingsStreamForTeeTime(TeeTime teeTime) {
-    print("Get stream bookings for ${teeTime.id}");
+    log.fine("Get stream bookings for ${teeTime.id}");
     assert(teeTime.id != null);
     var q = _firestore
         .collection("booking")
@@ -228,7 +232,7 @@ class TeeTimeService {
 
   // Return a list of bookings for this tee time
   Future<List<Booking>> getBookingsForTeeTime(TeeTime teeTime) async {
-    print("Get bookings for ${teeTime.id}");
+    log.fine("Get bookings for ${teeTime.id}");
     assert(teeTime.id != null);
     var q = _firestore
         .collection("booking")
@@ -270,9 +274,9 @@ class TeeTimeService {
           .updateData(updates);
       // now delete the booking
       await _firestore.collection("booking").document(b.id).delete();
-      print("Canceled booking ${b.id}");
+      log.fine("Canceled booking ${b.id}");
     } catch (e) {
-      print("Exception $e");
+      log.fine("Exception $e");
     }
   }
 
@@ -293,7 +297,7 @@ class TeeTimeService {
     // todo: check for the date / course being the same.
     // query does not implement equals, so we can't compare it.
 
-    print("Subscribe to Tee Times for courseId = $courseId, For $date");
+    log.fine("Subscribe to Tee Times for courseId = $courseId, For $date");
     var q = _teeTimeRef
         .where("courseId", isEqualTo: courseId)
         .where("dateTime", isGreaterThanOrEqualTo: ts)
@@ -301,7 +305,7 @@ class TeeTimeService {
         .orderBy("dateTime");
 
     if (_docSnaps != null) {
-      print("Cancelling previous stream");
+      log.fine("Cancelling previous stream");
       _docSnaps.cancel();
       list.clear();
     }
@@ -317,7 +321,7 @@ class TeeTimeService {
             list.remove(t);
             break;
           case DocumentChangeType.modified:
-            print("Document modified $t  ${docChange}");
+            log.fine("Document modified $t  ${docChange}");
             int i = list.indexWhere((l) => l.id == t.id);
             if (i == -1) {
               throw ServiceException("List did not contain document");

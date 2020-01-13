@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_golf/mobx/tee_sheet_store.dart';
 import 'package:flutter_golf/splash_screen.dart';
 import 'package:flutter_golf/svc/services.dart';
+import 'package:logging/logging.dart';
 import 'home_screen.dart';
 import 'mobx/mobx.dart';
 import 'pages/login_page.dart';
@@ -10,6 +10,11 @@ import 'package:flutter_golf/svc/firestore_svc.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 
 void main() {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((LogRecord rec) {
+    print('${rec.message}');
+  });
+
   runApp(App());
 }
 

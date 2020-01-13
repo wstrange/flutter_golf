@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_golf/mobx/user_store.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_golf/mobx/mobx.dart';
+import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
@@ -8,24 +8,34 @@ import '../util/validators.dart';
 
 const style = TextStyle(fontFamily: 'Montserrat', fontSize: 20.0);
 
-class LoginPage extends HookWidget {
-  Widget build(BuildContext context) {
-    //final repo = Provider.of<UserService>(context);
-    final userStore = Provider.of<UserStore>(context, listen: false);
-    //final userRepo = useListenable(repo);
+final log = Logger("LoginPage");
 
-    final _email = useMemoized(() => TextEditingController(text: ""));
-    final _password = useMemoized(() => TextEditingController(text: ""));
-    final _formKey = useMemoized(() => GlobalKey<FormState>());
-    final _key = useMemoized(() => GlobalKey<ScaffoldState>());
+class LoginPage extends StatefulWidget {
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final LoginStore loginStore = LoginStore();
+
+  initState() {
+    super.initState();
+    // loginStore.setupValidations
+  }
+
+  dispose() {
+    //loginStore.dispose();
+    super.dispose();
+  }
+
+  Widget build(BuildContext context) {
+    final userStore = Provider.of<UserStore>(context, listen: false);
 
     return Scaffold(
-      key: _key,
       appBar: AppBar(
         title: Text("Login"),
       ),
       body: Form(
-        key: _formKey,
         child: Center(
           child: Observer(
             builder: (_) => ListView(
@@ -33,14 +43,10 @@ class LoginPage extends HookWidget {
               children: <Widget>[
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: TextFormField(
-                    controller: _email,
-                    autovalidate: true,
+                  child: TextField(
+                    onChanged: (value) => loginStore.email = value,
                     autocorrect: false,
                     keyboardType: TextInputType.emailAddress,
-                    validator: (value) => !Validators.isValidEmail(value)
-                        ? "Please Enter valid Email"
-                        : null,
                     style: style,
                     decoration: InputDecoration(
                         prefixIcon: Icon(Icons.email),
@@ -51,13 +57,9 @@ class LoginPage extends HookWidget {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: TextFormField(
-                    controller: _password,
+                    onChanged: (value) => loginStore.password = value,
                     obscureText: true,
-                    autovalidate: true,
                     autocorrect: false,
-                    validator: (value) => !Validators.isValidPassword(value)
-                        ? "Please Enter a valid Password"
-                        : null,
                     style: style,
                     decoration: InputDecoration(
                         prefixIcon: Icon(Icons.lock),
@@ -74,14 +76,12 @@ class LoginPage extends HookWidget {
                       color: Colors.blueAccent,
                       child: MaterialButton(
                         onPressed: () async {
-                          if (_formKey.currentState.validate()) {
-                            _formKey.currentState.save();
-                            if (!await userStore.signInWithCredentials(
-                                _email.text, _password.text)) {
-                              _key.currentState.showSnackBar(SnackBar(
-                                content: Text("Login Failed"),
-                              ));
-                            }
+                          // if loginStore.isValid..
+                          log.fine("Log on with ${loginStore}");
+                          if (!await userStore.signInWithCredentials(
+                              loginStore.email, loginStore.password)) {
+//                              _key.currentState.showSnackBar(SnackBar(
+//                                content: Text("Login Failed"),
                           }
                         },
                         child: Text(
