@@ -14,25 +14,43 @@ const TextStyle _style = TextStyle(
   fontWeight: FontWeight.bold,
 );
 
-class TeeTimePage extends StatelessWidget {
+class TeeTimePage extends StatefulWidget {
   final TeeTime teeTime;
   final Course course;
 
   TeeTimePage({Key key, this.teeTime, this.course}) : super(key: key);
 
+  @override
+  _TeeTimePageState createState() => _TeeTimePageState();
+}
+
+class _TeeTimePageState extends State<TeeTimePage> {
+  UserStore userStore;
+  TeeTimeStore teeTimeStore;
+
+  initState() {
+    userStore = Provider.of<UserStore>(context, listen: false);
+    teeTimeStore = Provider.of<TeeTimeStore>(context, listen: false);
+  }
+
   Widget build(BuildContext context) {
     print("Build TeeTimePage");
-    var dateTimeString = util.dateToTeeTime(teeTime.dateTime);
-    var svc = Provider.of<FireStore>(context, listen: false);
-    var userStore = Provider.of<UserStore>(context);
-    var teeTimeStore = Provider.of<TeeTimeStore>(context, listen: false);
+    var dateTimeString = util.dateToTeeTime(widget.teeTime.dateTime);
+
+    // We want to watch the TeeTime for live updates, and watch
+    // the bookings associated with the tee time..
+    //
 
     // todo: This is async - so view may not be ready.
-    teeTimeStore.getTeeTime(teeTime.id);
+    //teeTimeStore.getTeeTime(widget.teeTime.id);
+    // watch the tee time, and then watch the bookings.
+    // but we only get to watch bookings we own...
+    teeTimeStore.getBookingsForTeeTime();
+    teeTimeStore.getBookings();
 
     return SafeArea(
       child: Scaffold(
-          appBar: AppBar(title: Text("${course.name}")),
+          appBar: AppBar(title: Text("${widget.course.name}")),
           body: Observer(
               builder: (_) => Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -69,15 +87,12 @@ class TeeTimePage extends StatelessWidget {
     );
   }
 
-  // Draw the list of players in each slot, or "available" if
-  // the slot is open
   List<Widget> _drawSlots(List<Booking> bookings, TeeTime teeTime) {
     return bookings
         .map((b) => _bookingWidget(b, teeTime))
         .toList(growable: false);
   }
 
-  // Create the widget that displays a single booking
   Widget _bookingWidget(Booking booking, TeeTime teeTime) {
     var players = booking.players.keys.map((playerId) {
       var name = booking.players[playerId].displayName;
@@ -110,6 +125,9 @@ class TeeTimePage extends StatelessWidget {
                 child: Text("Add Player"),
                 onPressed: () => print("todo - add player"),
               ),
+              RaisedButton(
+                  child: Text("Add Guest"),
+                  onPressed: () => teeTimeStore.addGuest(booking)),
               RaisedButton(
                 child: Text("Cancel"),
                 onPressed: () {

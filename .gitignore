@@ -68,3 +68,5 @@ node_modules/
 # added by warren
 service-accounts
 build
+
+.dart_tool/

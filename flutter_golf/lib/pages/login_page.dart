@@ -20,11 +20,11 @@ class _LoginPageState extends State<LoginPage> {
 
   initState() {
     super.initState();
-    // loginStore.setupValidations
+    loginStore.setupValidations();
   }
 
   dispose() {
-    //loginStore.dispose();
+    loginStore.dispose();
     super.dispose();
   }
 
@@ -51,12 +51,13 @@ class _LoginPageState extends State<LoginPage> {
                     decoration: InputDecoration(
                         prefixIcon: Icon(Icons.email),
                         labelText: "Email",
-                        border: OutlineInputBorder()),
+                        border: OutlineInputBorder(),
+                        errorText: loginStore.errors.email),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: TextFormField(
+                  child: TextField(
                     onChanged: (value) => loginStore.password = value,
                     obscureText: true,
                     autocorrect: false,
@@ -64,31 +65,31 @@ class _LoginPageState extends State<LoginPage> {
                     decoration: InputDecoration(
                         prefixIcon: Icon(Icons.lock),
                         labelText: "Password",
-                        border: OutlineInputBorder()),
+                        border: OutlineInputBorder(),
+                        errorText: loginStore.errors.password),
                   ),
                 ),
                 if (userStore.status != Status.Authenticating)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Material(
-                      elevation: 5.0,
-                      borderRadius: BorderRadius.circular(30.0),
+                    child: MaterialButton(
                       color: Colors.blueAccent,
-                      child: MaterialButton(
-                        onPressed: () async {
-                          // if loginStore.isValid..
-                          log.fine("Log on with ${loginStore}");
-                          if (!await userStore.signInWithCredentials(
-                              loginStore.email, loginStore.password)) {
-//                              _key.currentState.showSnackBar(SnackBar(
-//                                content: Text("Login Failed"),
-                          }
-                        },
-                        child: Text(
-                          "Sign In",
-                          style: style.copyWith(
-                              color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
+                      disabledColor: Colors.grey,
+                      // todo: set this to null
+                      onPressed: loginStore.errors.hasErrors
+                          ? null
+                          : () {
+                              loginStore.validateAll();
+                              if (!loginStore.errors.hasErrors) {
+                                log.fine("Log on with ${loginStore}");
+                                userStore.signInWithCredentials(
+                                    loginStore.email, loginStore.password);
+                              }
+                            },
+                      child: Text(
+                        "Sign In",
+                        style: style.copyWith(
+                            color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -100,7 +101,6 @@ class _LoginPageState extends State<LoginPage> {
                         child:
                             SignInButton(Buttons.Google, onPressed: () async {
                           await userStore.signInWithGoogle();
-                          print("authenticated!!!!");
                         }),
                       )
               ],

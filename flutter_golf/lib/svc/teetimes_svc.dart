@@ -10,7 +10,7 @@ final Logger log = new Logger('TeeTimeService');
 
 // Converts a stream of firestore doc snapshots to a list
 // of TeeTimes
-final _teeTimeTransformer =
+final _teeTimeListTransformer =
     StreamTransformer<QuerySnapshot, List<TeeTime>>.fromHandlers(
         handleData: (snapshot, sink) {
           // snapshot.documents.forEach((doc) => print("Doc = ${doc.data}"));
@@ -21,6 +21,21 @@ final _teeTimeTransformer =
               .toList();
           //print("Tee times = $teeTimes");
           sink.add(teeTimes);
+        },
+        handleDone: (sink) => print("Tee time transformer done"),
+        handleError: (error, stacktrace, sink) =>
+            print("** transformer error $error "));
+
+final _teeTimeTransformer =
+    StreamTransformer<QuerySnapshot, TeeTime>.fromHandlers(
+        handleData: (snapshot, sink) {
+          assert(
+              snapshot.documents.isNotEmpty && snapshot.documents.length == 1);
+          var doc = snapshot.documents.first;
+
+          var teeTime =
+              jsonSerializer.deserializeWith(TeeTime.serializer, doc.data);
+          sink.add(teeTime);
         },
         handleDone: (sink) => print("Tee time transformer done"),
         handleError: (error, stacktrace, sink) =>
@@ -53,7 +68,9 @@ class TeeTimeService {
     _teeTimeRef = _firestore.collection("teeTimes");
   }
 
-  Stream<List<TeeTime>> getTeeTimeStream(String courseId, DateTime date) {
+  // gets a stream of updates for this course, date
+  Stream<List<TeeTime>> getTeeTimeByCourseAndDateStream(
+      String courseId, DateTime date) {
     var start = DateTime(date.year, date.month, date.day, 0, 1);
     var end = DateTime(date.year, date.month, date.day, 23, 59);
 
@@ -68,7 +85,13 @@ class TeeTimeService {
         .where("dateTime", isLessThanOrEqualTo: te)
         .orderBy("dateTime");
 
-    return q.snapshots().transform(_teeTimeTransformer);
+    return q.snapshots().transform(_teeTimeListTransformer);
+  }
+
+  // listen for updates to a single tee time
+  Stream<TeeTime> getTeeTimeStream(String id) {
+    var doc = _teeTimeRef.document(id);
+    return doc.snapshots().transform(_teeTimeTransformer);
   }
 //
 //  Future<List<TeeTime>> _getTeeTimeList(String courseId, DateTime date) async {
@@ -159,7 +182,7 @@ class TeeTimeService {
     });
   }
 
-  // Create a booking.
+  // Create a new booking.
   Future<void> createBooking(Booking booking) async {
     try {
       log.fine("Creating booking");
@@ -184,6 +207,7 @@ class TeeTimeService {
       ..createdByUser = user.toBuilder()
       ..courseId = teeTime.courseId
       ..paid = true
+      ..numberGuests = 0
       ..teeTimeId = teeTime.id);
 
     await createBooking(booking);
@@ -220,12 +244,10 @@ class TeeTimeService {
   }
 
   // Return a stream of Bookings linked to this tee time
-  Stream<List<Booking>> getBookingsStreamForTeeTime(TeeTime teeTime) {
-    log.fine("Get stream bookings for ${teeTime.id}");
-    assert(teeTime.id != null);
-    var q = _firestore
-        .collection("booking")
-        .where("teeTimeId", isEqualTo: teeTime.id);
+  Stream<List<Booking>> getBookingsStreamForTeeTimeId(String id) {
+    log.fine("Get stream bookings for ${id}");
+    assert(id != null);
+    var q = _firestore.collection("booking").where("teeTimeId", isEqualTo: id);
 
     return q.snapshots().transform(_bookingTransformer);
   }

@@ -107,6 +107,9 @@ abstract class Booking implements Built<Booking, BookingBuilder> {
   String get id;
   String get teeTimeId;
   String get courseId;
+  int get numberGuests; // the number of guests the booker is bringing.
+  @nullable
+  String get notes; //any special notes the booker wants to add
 
   // this is the id of the user that booked this slot.
   // They might not be playing.
